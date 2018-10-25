@@ -169,7 +169,11 @@ def get_urls(sqlquery, params):
 
     if is_prod:
         # Define our connection string
-        conn_string = secret_conn_string
+        host = "localhost"
+        dbname = "juve_bot"
+        user = "graham"
+        password = "moses40"
+        conn_string = "host='localhost' dbname='juve_bot' user='graham' password ='moses40'"
         # print the connection string we will use to connect
         print("Connecting to database\n	->%s" % (conn_string))
 
@@ -183,7 +187,12 @@ def get_urls(sqlquery, params):
     else:
         # Define our connection string
         # conn_string = "host='{}' dbname='{}' user='{}' password='{}'".format(host,dbname,user,password)
-        conn_string = secret_conn_string
+        # Define our connection string
+        host = "localhost"
+        dbname = "juve_bot"
+        user = "graham"
+        password = "moses40"
+        conn_string = "host='localhost' dbname='juve_bot' user='graham' password ='moses40'"
 
         # print the connection string we will use to connect
         print("Connecting to database\n	->%s" % (conn_string))
