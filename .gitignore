@@ -1,4 +1,3 @@
-.gitignore
 psycopg2
 *.txt
 Juve_goals_update.csv
