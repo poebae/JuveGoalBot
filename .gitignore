@@ -7,3 +7,4 @@ config.py
 .~lock.Juve_goals_update
 .~lock.Juve_goals.csv*
 __pycache__
+juve_bot.sql
