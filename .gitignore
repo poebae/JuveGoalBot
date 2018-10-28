@@ -1,0 +1,9 @@
+psycopg2
+*.txt
+Juve_goals_update.csv
+onetime.py
+config.py
+.~lock.Juve_goals_update
+.~lock.Juve_goals.csv*
+__pycache__
+juve_bot.sql
