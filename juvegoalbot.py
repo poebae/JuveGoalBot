@@ -66,7 +66,7 @@ def get_sql_items(query):
         # Create a variable for the second portion of the query
         second_query = query[1].strip()
         # Search to see if the second portion is a competion specific query
-        if second_query == "icc" or second_query == "serie a" or second_query == "allstars" or second_query == "ucl" or second_query == "coppa" or second_query == "friendly" or second_query == "supercoppa":
+        if second_query == "icc" or second_query == "serie a" or second_query == "allstars" or second_query == "ucl" or second_query == "coppa" or second_query == "friendly" or second_query == "supercoppa" or second_query == "europa":
 
             # Add second portion to the params
             params.append(second_query)
@@ -123,7 +123,7 @@ def get_assist_items(query):
         # Create a variable for the second portion of the query
         second_query = query[1].strip()
         # Search to see if the second portion is a competion specific query
-        if second_query == "icc" or second_query == "serie a" or second_query == "allstars" or second_query == "ucl" or second_query == "coppa" or second_query == "friendly" or second_query == "supercoppa":
+        if second_query == "icc" or second_query == "serie a" or second_query == "allstars" or second_query == "ucl" or second_query == "coppa" or second_query == "friendly" or second_query == "supercoppa" or second_query == "europa":
 
             # Add second portion to the params
             params.append(second_query)
