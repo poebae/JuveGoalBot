@@ -88,7 +88,7 @@ def get_sql_items(query):
             print('No second query item')
             return("no item")
 
-        elif second_query == "2018-19" or second_query == "2017-18":
+        elif second_query == "2018-19" or second_query == "2017-18" or second_query == "2016-17" or second_query == "2015-16" or second_query == "2014-15" or second_query == "2013-14" or second_query == "2012-13" or second_query == "2011-12" or second_query == "2010-11" or second_query == "2009-10" or second_query == "2008-09" or second_query == "2007-08" or second_query == "2006-07" or second_query == "2005-06" or second_query == "2004-05" or second_query == "2003-04" or second_query == "2002-03" or second_query == "2001-02" or second_query == "2000-01":
             params.append(second_query)
             sqlquery = '''SELECT opposition, competition, season, url FROM juve_goals WHERE scorer = %s AND season = %s; '''
             return sqlquery, params
@@ -261,7 +261,7 @@ def run(r):
                         time.sleep(10)
                     # If the reply comes back with no results. Let individual know
                     else:
-                        reply = 'Clip not found. Only 2018/19 clips are currently available. Feel free to [post a question in the help thread.](https://www.reddit.com/r/juve_goal_bot/comments/9qpxjh/juve_goal_bot_questionsbug_reports)'
+                        reply = 'Clip not found. Feel free to [post a question in the help thread.](https://www.reddit.com/r/juve_goal_bot/comments/9qpxjh/juve_goal_bot_questionsbug_reports)'
                         comment.reply(reply)
                         with open('goalComments.txt', 'a+') as outfile:
                             outfile.write(comment.id + '\n')
@@ -312,7 +312,7 @@ def run(r):
                         time.sleep(10)
                     # If the reply comes back with no results. Let individual know
                     else:
-                        reply = 'Clip not found. Only 2018/19 clips are currently available. Feel free to [post a question in the help thread.](https://www.reddit.com/r/juve_goal_bot/comments/9qpxjh/juve_goal_bot_questionsbug_reports)'
+                        reply = 'Clip not found. Feel free to [post a question in the help thread.](https://www.reddit.com/r/juve_goal_bot/comments/9qpxjh/juve_goal_bot_questionsbug_reports)'
                         comment.reply(reply)
                         with open('assistComments.txt', 'a+') as outfile:
                             outfile.write(comment.id + '\n')
