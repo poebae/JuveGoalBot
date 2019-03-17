@@ -8,7 +8,7 @@ import psycopg2
 import time
 import unidecode
 import os
-import config
+
 
 def login():
     r = praw.Reddit('juvegoalbot')
@@ -21,7 +21,7 @@ FOOTER = '''___\n\n
 ^^| ^^[Data](https://www.reddit.com/r/juve_goal_bot/wiki/dataset)'''
 
 def parse_body(body):
-    # Find comments that start with the keyword and start indexing the characters
+    # Find comments that start with the keyword and index the characters
     start_index = body.find('!goal ')
     # Remove first 8 characters to pull request
     body = body[start_index + 5:]
@@ -36,7 +36,7 @@ def parse_body(body):
 
 
 def parse_body_assist(body):
-    # Find comments that start with the keyword and start indexing the characters
+    # Find comments that start with the keyword and index the characters
     start_index = body.find('!assist ')
     # Remove first 8 characters to pull request
     body = body[start_index + 8:]
@@ -66,7 +66,14 @@ def get_sql_items(query):
         # Create a variable for the second portion of the query
         second_query = query[1].strip()
         # Search to see if the second portion is a competion specific query
-        if second_query == "icc" or second_query == "serie a" or second_query == "allstars" or second_query == "ucl" or second_query == "coppa" or second_query == "friendly" or second_query == "supercoppa" or second_query == "europa":
+        if second_query == "icc" or             \
+                second_query == "serie a" or    \
+                second_query == "allstars" or   \
+                second_query == "ucl" or        \
+                second_query == "coppa" or      \
+                second_query == "friendly" or   \
+                second_query == "supercoppa" or \
+                second_query == "europa":
 
             # Add second portion to the params
             params.append(second_query)
@@ -88,7 +95,25 @@ def get_sql_items(query):
             print('No second query item')
             return("no item")
 
-        elif second_query == "2018-19" or second_query == "2017-18" or second_query == "2016-17" or second_query == "2015-16" or second_query == "2014-15" or second_query == "2013-14" or second_query == "2012-13" or second_query == "2011-12" or second_query == "2010-11" or second_query == "2009-10" or second_query == "2008-09" or second_query == "2007-08" or second_query == "2006-07" or second_query == "2005-06" or second_query == "2004-05" or second_query == "2003-04" or second_query == "2002-03" or second_query == "2001-02" or second_query == "2000-01":
+        elif second_query == "2018-19" or       \
+                second_query == "2017-18" or    \
+                second_query == "2016-17" or    \
+                second_query == "2015-16" or    \
+                second_query == "2014-15" or    \
+                second_query == "2013-14" or    \
+                second_query == "2012-13" or    \
+                second_query == "2011-12" or    \
+                second_query == "2010-11" or    \
+                second_query == "2009-10" or    \
+                second_query == "2008-09" or    \
+                second_query == "2007-08" or    \
+                second_query == "2006-07" or    \
+                second_query == "2005-06" or    \
+                second_query == "2004-05" or    \
+                second_query == "2003-04" or    \
+                second_query == "2002-03" or    \
+                second_query == "2001-02" or    \
+                second_query == "2000-01":
             params.append(second_query)
             sqlquery = '''SELECT opposition, competition, season, url FROM juve_goals WHERE scorer = %s AND season = %s; '''
             return sqlquery, params
@@ -123,7 +148,14 @@ def get_assist_items(query):
         # Create a variable for the second portion of the query
         second_query = query[1].strip()
         # Search to see if the second portion is a competion specific query
-        if second_query == "icc" or second_query == "serie a" or second_query == "allstars" or second_query == "ucl" or second_query == "coppa" or second_query == "friendly" or second_query == "supercoppa" or second_query == "europa":
+        if second_query == "icc" or             \
+                second_query == "serie a" or    \
+                second_query == "allstars" or   \
+                second_query == "ucl" or        \
+                second_query == "coppa" or      \
+                second_query == "friendly" or   \
+                second_query == "supercoppa" or \
+                second_query == "europa":
 
             # Add second portion to the params
             params.append(second_query)
@@ -140,7 +172,25 @@ def get_assist_items(query):
             print("Search via leagues")
             return sqlquery, params
 
-        elif second_query == "2018-19" or second_query == "2017-18" or second_query == "2016-17" or second_query == "2015-16" or second_query == "2014-15" or second_query == "2013-14" or second_query == "2012-13" or second_query == "2011-12" or second_query == "2010-11" or second_query == "2009-10" or second_query == "2008-09" or second_query == "2007-08" or second_query == "2006-07" or second_query == "2005-06" or second_query == "2004-05" or second_query == "2003-04" or second_query == "2002-03" or second_query == "2001-02" or second_query == "2000-01":
+        elif second_query == "2018-19" or       \
+                second_query == "2017-18" or    \
+                second_query == "2016-17" or    \
+                second_query == "2015-16" or    \
+                second_query == "2014-15" or    \
+                second_query == "2013-14" or    \
+                second_query == "2012-13" or    \
+                second_query == "2011-12" or    \
+                second_query == "2010-11" or    \
+                second_query == "2009-10" or    \
+                second_query == "2008-09" or    \
+                second_query == "2007-08" or    \
+                second_query == "2006-07" or    \
+                second_query == "2005-06" or    \
+                second_query == "2004-05" or    \
+                second_query == "2003-04" or    \
+                second_query == "2002-03" or    \
+                second_query == "2001-02" or    \
+                second_query == "2000-01":
             params.append(second_query)
             sqlquery = '''SELECT opposition, competition, season, url FROM juve_goals WHERE assist = %s AND season = %s; '''
             return sqlquery, params
@@ -169,10 +219,10 @@ def get_urls(sqlquery, params):
 
     if is_prod:
         # Define our connection string
-        host = "localhost"
-        dbname = "juve_bot"
-        user = "graham"
-        password = "moses40"
+        # host = "localhost"
+        # dbname = "juve_bot"
+        # user = "graham"
+        # password = "moses40"
         conn_string = "host='localhost' dbname='juve_bot' user='graham' password ='moses40'"
         # print the connection string we will use to connect
         print("Connecting to database\n	->%s" % (conn_string))
@@ -188,10 +238,10 @@ def get_urls(sqlquery, params):
         # Define our connection string
         # conn_string = "host='{}' dbname='{}' user='{}' password='{}'".format(host,dbname,user,password)
         # Define our connection string
-        host = "localhost"
-        dbname = "juve_bot"
-        user = "graham"
-        password = "moses40"
+        # host = "localhost"
+        # dbname = "juve_bot"
+        # user = "graham"
+        # password = "moses40"
         conn_string = "host='localhost' dbname='juve_bot' user='graham' password ='moses40'"
 
         # print the connection string we will use to connect
