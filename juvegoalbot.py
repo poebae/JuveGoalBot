@@ -16,9 +16,9 @@ def login():
 
 FOOTER = '''___\n\n
 ^^[Wiki](https://www.reddit.com/r/juve_goal_bot/wiki/index)
-^^| ^^[Feedback](/r/juve_goal_bot)
-^^| ^^[Creator](/u/droidonomy)'''
-
+^^| ^^[Creator](/u/droidonomy)
+^^| ^^[Use](https://www.reddit.com/r/Juve/comments/9quyaa/i_created_a_bot_to_show_juve_goals_on_demand/)
+^^| ^^[Data](https://www.reddit.com/r/juve_goal_bot/wiki/dataset)'''
 
 def parse_body(body):
     # Find comments that start with the keyword and start indexing the characters
