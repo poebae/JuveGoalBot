@@ -65,29 +65,28 @@ def get_sql_items(query):
         # Create a variable for the second portion of the query
         second_query = query[1].strip()
         # Search to see if the second portion is a competion specific query
-        if second_query == "icc" or             \
-                second_query == "serie a" or    \
-                second_query == "allstars" or   \
-                second_query == "ucl" or        \
-                second_query == "coppa" or      \
-                second_query == "friendly" or   \
-                second_query == "supercoppa" or \
-                second_query == "europa":
+        if second_query == "icc" or        \
+           second_query == "serie a" or    \
+           second_query == "allstars" or   \
+           second_query == "ucl" or        \
+           second_query == "coppa" or      \
+           second_query == "friendly" or   \
+           second_query == "supercoppa" or \
+           second_query == "europa":
 
-            # Add second portion to the params
-            params.append(second_query)
+               # Add second portion to the params
+               params.append(second_query)
 
-            if 0 <= 2 < len(query):
+               if 0 <= 2 < len(query):
+                   third_query = query[2].strip()
+                   params.append(third_query)
+                   sqlquery = '''SELECT date, opposition, result, competition, season, scorer, assist, url FROM juve_goals WHERE scorer = %s AND competition = %s AND season = %s; '''
+                   return sqlquery, params
 
-                third_query = query[2].strip()
-                params.append(third_query)
-                sqlquery = '''SELECT date, opposition, result, competition, season, scorer, assist, url FROM juve_goals WHERE scorer = %s AND competition = %s AND season = %s; '''
-                return sqlquery, params
-
-            # Build a query specific to search for player and competion
-            sqlquery = '''SELECT date, opposition, result, competition, season, scorer, assist, url FROM juve_goals WHERE scorer = %s AND competition = %s; '''
-            print("Searching by competition")
-            return sqlquery, params
+               # Build a query specific to search for player and competion
+               sqlquery = '''SELECT date, opposition, result, competition, season, scorer, assist, url FROM juve_goals WHERE scorer = %s AND competition = %s; '''
+               print("Searching by competition")
+               return sqlquery, params
 
         elif second_query is None:
             # TODO handle this better....
@@ -104,7 +103,6 @@ def get_sql_items(query):
             # add second section to params
             params.append(second_query)
             if 0 <= 2 < len(query):
-
                 third_query = query[2].strip()
                 params.append(third_query)
                 sqlquery = '''SELECT date, opposition, result, competition, season, scorer, assist, url FROM juve_goals WHERE scorer = %s AND opposition = %s AND season = %s; '''
@@ -114,7 +112,6 @@ def get_sql_items(query):
             sqlquery = '''SELECT date, opposition, result, competition, season, scorer, assist, url FROM juve_goals WHERE scorer = %s AND opposition = %s; '''
             print("No league specified")
             return sqlquery, params
-
 
 def get_assist_items(query):
     # Create an empty array for params to be added to
@@ -126,54 +123,68 @@ def get_assist_items(query):
 
     # If query is longer than one section..
     if 0 <= 1 < len(query):
+
         # Create a variable for the second portion of the query
         second_query = query[1].strip()
-        # Search to see if the second portion is a competion specific query
-        if second_query == "icc" or             \
-                second_query == "serie a" or    \
-                second_query == "allstars" or   \
-                second_query == "ucl" or        \
-                second_query == "coppa" or      \
-                second_query == "friendly" or   \
-                second_query == "supercoppa" or \
-                second_query == "europa":
+
+        # If queries > 1 and second is a competition
+        if second_query == "icc" or        \
+           second_query == "serie a" or    \
+           second_query == "allstars" or   \
+           second_query == "ucl" or        \
+           second_query == "coppa" or      \
+           second_query == "friendly" or   \
+           second_query == "supercoppa" or \
+           second_query == "europa":
 
             # Add second portion to the params
-            params.append(second_query)
+               params.append(second_query)
 
-            if 0 <= 2 < len(query):
+            # If there's a third query
+               if 0 <= 2 < len(query):
+                   third_query = query[2].strip()
 
-                third_query = query[2].strip()
-                params.append(third_query)
-                sqlquery = '''SELECT date, opposition, result, competition, season, scorer, assist, url FROM juve_goals WHERE assist = %s AND competition = %s AND season = %s; '''
-                return sqlquery, params
+                   # If query 3 is a season
+                   if third_query[0].isdigit():
+                       params.append(third_query)
+                       sqlquery = '''SELECT date, opposition, result, competition, season, scorer, assist, url FROM juve_goals WHERE assist = %s AND competition = %s AND season = %s; '''
+                       return sqlquery, params
 
             # Build a query specific to search for player and competion
-            sqlquery = '''SELECT date, opposition, result, competition, season, scorer, assist, url FROM juve_goals WHERE assist = %s AND competition = %s; '''
-            print("Searching by competition")
-            return sqlquery, params
+               sqlquery = '''SELECT date, opposition, result, competition, season, scorer, assist, url FROM juve_goals WHERE assist = %s AND competition = %s; '''
+               print("Searching by competition")
+               return sqlquery, params
 
+        # If 2 queries and query 2 is a season
         elif second_query[0].isdigit():
-            params.append(second_query)
-            sqlquery = '''SELECT date, opposition, result, competition, season, scorer, assist, url FROM juve_goals WHERE assist = %s AND season = %s; '''
-            return sqlquery, params
+           params.append(second_query)
+           sqlquery = '''SELECT date, opposition, result, competition, season, scorer, assist, url FROM juve_goals WHERE assist = %s AND season = %s; '''
+           return sqlquery, params
 
-        # If the second section does not state a competition
+        # If 2 queries and query 2 is not a competition
         else:
+
             # add second section to params
             params.append(second_query)
-            if 0 <= 2 < len(query):
 
+            # If queries > 2
+            if 0 <= 2 < len(query):
                 third_query = query[2].strip()
-                params.append(third_query)
-                sqlquery = '''SELECT date, opposition, result, competition, season, scorer, assist, url FROM juve_goals WHERE assist = %s AND opposition = %s AND season = %s; '''
-                return sqlquery, params
+
+                # If query 3 is a season
+                if third_query[0].isdigit():
+                    params.append(third_query)
+                    sqlquery = '''SELECT date, opposition, result, competition, season, scorer, assist, url FROM juve_goals WHERE assist = %s AND opposition = %s AND season = %s; '''
+                    return sqlquery, params
 
             # Query specifically for player and opposition
-            sqlquery = '''SELECT date, opposition, result, competition, season, scorer, assist, url FROM juve_goals WHERE assist = %s AND opposition = %s; '''
-            print("No league specified")
-            return sqlquery, params
+            # sqlquery = '''SELECT date, opposition, result, competition, season, scorer, assist, url FROM juve_goals WHERE assist = %s AND opposition = %s; '''
+            # print("No league specified")
+            # return sqlquery, params
 
+            sqlquery = '''SELECT date, opposition, result, competition, season, scorer, assist, url FROM juve_goals WHERE assist = %s AND scorer = %s; '''
+            print("Assister and scorer query")
+            return sqlquery, params
 
 def get_urls(sqlquery, params):
     is_prod = os.environ.get('IS_HEROKU', None)
