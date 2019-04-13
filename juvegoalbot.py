@@ -9,7 +9,6 @@ import time
 import unidecode
 import os
 
-
 def login():
     r = praw.Reddit('juvegoalbot')
     return r
@@ -82,12 +81,12 @@ def get_sql_items(query):
 
                 third_query = query[2].strip()
                 params.append(third_query)
-                sqlquery = '''SELECT opposition, competition, season, url FROM juve_goals WHERE scorer = %s AND competition = %s AND season = %s; '''
+                sqlquery = '''SELECT date, opposition, result, competition, season, scorer, assist, url FROM juve_goals WHERE scorer = %s AND competition = %s AND season = %s; '''
                 return sqlquery, params
 
             # Build a query specific to search for player and competion
-            sqlquery = '''SELECT opposition, competition, season, url FROM juve_goals WHERE scorer = %s AND competition = %s; '''
-            print("Search via leagues")
+            sqlquery = '''SELECT date, opposition, result, competition, season, scorer, assist, url FROM juve_goals WHERE scorer = %s AND competition = %s; '''
+            print("Searching by competition")
             return sqlquery, params
 
         elif second_query is None:
@@ -95,27 +94,9 @@ def get_sql_items(query):
             print('No second query item')
             return("no item")
 
-        elif second_query == "2018-19" or       \
-                second_query == "2017-18" or    \
-                second_query == "2016-17" or    \
-                second_query == "2015-16" or    \
-                second_query == "2014-15" or    \
-                second_query == "2013-14" or    \
-                second_query == "2012-13" or    \
-                second_query == "2011-12" or    \
-                second_query == "2010-11" or    \
-                second_query == "2009-10" or    \
-                second_query == "2008-09" or    \
-                second_query == "2007-08" or    \
-                second_query == "2006-07" or    \
-                second_query == "2005-06" or    \
-                second_query == "2004-05" or    \
-                second_query == "2003-04" or    \
-                second_query == "2002-03" or    \
-                second_query == "2001-02" or    \
-                second_query == "2000-01":
+        elif second_query[0].isdigit():
             params.append(second_query)
-            sqlquery = '''SELECT opposition, competition, season, url FROM juve_goals WHERE scorer = %s AND season = %s; '''
+            sqlquery = '''SELECT date, opposition, result, competition, season, scorer, assist, url FROM juve_goals WHERE scorer = %s AND season = %s; '''
             return sqlquery, params
 
         # If the second section does not state a competition
@@ -126,11 +107,11 @@ def get_sql_items(query):
 
                 third_query = query[2].strip()
                 params.append(third_query)
-                sqlquery = '''SELECT opposition, competition, season, url FROM juve_goals WHERE scorer = %s AND opposition = %s AND season = %s; '''
+                sqlquery = '''SELECT date, opposition, result, competition, season, scorer, assist, url FROM juve_goals WHERE scorer = %s AND opposition = %s AND season = %s; '''
                 return sqlquery, params
 
             # Query specifically for player and opposition
-            sqlquery = '''SELECT opposition, competition, season, url FROM juve_goals WHERE scorer = %s AND opposition = %s; '''
+            sqlquery = '''SELECT date, opposition, result, competition, season, scorer, assist, url FROM juve_goals WHERE scorer = %s AND opposition = %s; '''
             print("No league specified")
             return sqlquery, params
 
@@ -164,35 +145,17 @@ def get_assist_items(query):
 
                 third_query = query[2].strip()
                 params.append(third_query)
-                sqlquery = '''SELECT opposition, competition, season, url FROM juve_goals WHERE assist = %s AND competition = %s AND season = %s; '''
+                sqlquery = '''SELECT date, opposition, result, competition, season, scorer, assist, url FROM juve_goals WHERE assist = %s AND competition = %s AND season = %s; '''
                 return sqlquery, params
 
             # Build a query specific to search for player and competion
-            sqlquery = '''SELECT opposition, competition, season, url FROM juve_goals WHERE assist = %s AND competition = %s; '''
-            print("Search via leagues")
+            sqlquery = '''SELECT date, opposition, result, competition, season, scorer, assist, url FROM juve_goals WHERE assist = %s AND competition = %s; '''
+            print("Searching by competition")
             return sqlquery, params
 
-        elif second_query == "2018-19" or       \
-                second_query == "2017-18" or    \
-                second_query == "2016-17" or    \
-                second_query == "2015-16" or    \
-                second_query == "2014-15" or    \
-                second_query == "2013-14" or    \
-                second_query == "2012-13" or    \
-                second_query == "2011-12" or    \
-                second_query == "2010-11" or    \
-                second_query == "2009-10" or    \
-                second_query == "2008-09" or    \
-                second_query == "2007-08" or    \
-                second_query == "2006-07" or    \
-                second_query == "2005-06" or    \
-                second_query == "2004-05" or    \
-                second_query == "2003-04" or    \
-                second_query == "2002-03" or    \
-                second_query == "2001-02" or    \
-                second_query == "2000-01":
+        elif second_query[0].isdigit():
             params.append(second_query)
-            sqlquery = '''SELECT opposition, competition, season, url FROM juve_goals WHERE assist = %s AND season = %s; '''
+            sqlquery = '''SELECT date, opposition, result, competition, season, scorer, assist, url FROM juve_goals WHERE assist = %s AND season = %s; '''
             return sqlquery, params
 
         # If the second section does not state a competition
@@ -203,11 +166,11 @@ def get_assist_items(query):
 
                 third_query = query[2].strip()
                 params.append(third_query)
-                sqlquery = '''SELECT opposition, competition, season, url FROM juve_goals WHERE assist = %s AND opposition = %s AND season = %s; '''
+                sqlquery = '''SELECT date, opposition, result, competition, season, scorer, assist, url FROM juve_goals WHERE assist = %s AND opposition = %s AND season = %s; '''
                 return sqlquery, params
 
             # Query specifically for player and opposition
-            sqlquery = '''SELECT opposition, competition, season, url FROM juve_goals WHERE assist = %s AND opposition = %s; '''
+            sqlquery = '''SELECT date, opposition, result, competition, season, scorer, assist, url FROM juve_goals WHERE assist = %s AND opposition = %s; '''
             print("No league specified")
             return sqlquery, params
 
@@ -219,10 +182,6 @@ def get_urls(sqlquery, params):
 
     if is_prod:
         # Define our connection string
-        # host = "localhost"
-        # dbname = "juve_bot"
-        # user = "graham"
-        # password = "moses40"
         conn_string = "host='localhost' dbname='juve_bot' user='graham' password ='moses40'"
         # print the connection string we will use to connect
         print("Connecting to database\n	->%s" % (conn_string))
@@ -236,12 +195,6 @@ def get_urls(sqlquery, params):
 
     else:
         # Define our connection string
-        # conn_string = "host='{}' dbname='{}' user='{}' password='{}'".format(host,dbname,user,password)
-        # Define our connection string
-        # host = "localhost"
-        # dbname = "juve_bot"
-        # user = "graham"
-        # password = "moses40"
         conn_string = "host='localhost' dbname='juve_bot' user='graham' password ='moses40'"
 
         # print the connection string we will use to connect
@@ -262,12 +215,18 @@ def get_urls(sqlquery, params):
     if cursor:
         # For each record that comes back, loop through and build the reply
         for record in cursor:
-            reply += '[{}: {} ({})](https://imgur.com/{})'.format(record[0], record[1], record[2], record[3])
+            reply += '[{} {} vs {} (assist: {}), {}: {} {}](https://imgur.com/{})'.format(record[5], record[2], record[1], record[6], record[0], record[3], record[4], record[7])
+            reply = reply.replace("   ", " ")
+            reply = reply.replace("  ", " ")
+            reply = reply.replace("  ", " ")
+            reply = reply.replace("serie a", "Serie A")
+            reply = reply.replace("ucl", "UCL ")
+            reply = reply.replace(" )", ")")
+            reply = reply.replace(" ]", "]")
             reply += '\n\n'
 
         reply += FOOTER
         return reply
-
 
 def run(r):
     # Get all comments from designated subreddits
