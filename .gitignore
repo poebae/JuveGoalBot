@@ -1,3 +1,4 @@
+.gitignore
 psycopg2
 *.txt
 Juve_goals_update.csv
@@ -9,3 +10,4 @@ __pycache__
 juve_bot.sql
 nohup.out
 credentials.py
+config.pyc
