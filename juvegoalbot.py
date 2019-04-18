@@ -1,7 +1,9 @@
 # !/usr/bin/env python
 # coding=utf-8
 
-# import postgresConfig
+# Bot to serve Juventus goals to /r/juve
+# Author: /u/droidonomy
+
 import praw
 import prawcore
 import psycopg2
@@ -11,6 +13,7 @@ import re
 import os
 import credentials
 
+
 def login():
     r = praw.Reddit('juvegoalbot')
     return r
@@ -19,7 +22,7 @@ FOOTER = '''___\n\n
 ^^[Wiki](https://www.reddit.com/r/juve_goal_bot/wiki/index)
 ^^| ^^[Data](https://www.reddit.com/r/juve_goal_bot/wiki/dataset)
 ^^| ^^[Usage](https://www.reddit.com/r/juve_goal_bot/wiki/usage)
-^^| ^^[Creator: /u/droidonomy](/u/droidonomy)'''
+^^| ^^[Creator](/u/droidonomy)'''
 
 
 def parse_body_goal(body):
@@ -256,7 +259,7 @@ def get_team_items(query):
         # Otherwise just show all goals against specified team
         else:
             sqlquery = '''SELECT date, opposition, result, competition, season, scorer, assist, url FROM juve_goals WHERE opposition = %s; '''
-            return sqlquery, params            
+            return sqlquery, params
 
     else:
         sqlquery = '''SELECT date, opposition, result, competition, season, scorer, assist, url FROM juve_goals WHERE opposition = %s; '''
@@ -294,19 +297,19 @@ def get_urls(sqlquery, params):
         # record[7] = url
 
         for record in cursor:
-            reply += '[{} {} vs {} (assist: {}), {} {} - {}](https://imgur.com/{})'.format(record[5], record[2], record[1], record[6], record[4], record[3], record[0], record[7])
-            reply = reply.replace("   ", " ")
-            reply = reply.replace("  ", " ")
-            reply = reply.replace("    ", " ")
-            reply = reply.replace("      ", " ")
-            reply = reply.replace("serie a", "Serie A")
-            reply = reply.replace("serie b", "Serie B")
-            reply = reply.replace("ucl", "UCL ")
-            reply = reply.replace("coppa", "Coppa")
-            reply = reply.replace(" )", ")")
-            reply = reply.replace(" ]", "]")
-            reply = reply.replace("None", "none")
+            scorer = record[5].rstrip()
+            score = record[2].rstrip()
+            opposition = record[1].rstrip()
+            assist = record[6].rstrip()
+            season = record[4].rstrip()
+            competition = record[3].rstrip()
+            date = record[0].rstrip()
+            url = record[7].rstrip()
+
+            reply += f'[{scorer.title()} {score} vs {opposition.title()} (assist: {assist.title()}), {season} {competition.title()} - {date}](https://imgur.com/{url})'
             reply += '\n\n'
+            reply = reply.replace("Ucl", "UCL")
+            reply = reply.replace("Icc", "ICC")
 
         reply += FOOTER
         return reply
