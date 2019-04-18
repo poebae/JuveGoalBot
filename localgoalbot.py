@@ -1,13 +1,8 @@
-# !/usr/bin/env python
-# coding=utf-8
-
 # Used for local testing of Juve goal bot
+# Author: /u/droidonomy
 
 import psycopg2
-import time
 import unidecode
-import re
-import os
 import credentials
 
 
@@ -36,7 +31,6 @@ def parse_body_assist(body):
     print('user query: {}'.format(body))
     # Split the query into different sections at each comma
     query = body.split(',')
-
     return query
 
 
@@ -51,7 +45,6 @@ def parse_body_team(body):
     print('user query: {}'.format(body))
     # Split the query into different sections at each comma
     query = body.split(',')
-
     return query
 
 
@@ -256,7 +249,6 @@ def get_urls(sqlquery, params):
     cursor = conn.cursor()
     print("Connected!\n")
 
-    cursor = conn.cursor()
     # Execute query to db for data
     cursor.execute(sqlquery, params)
     reply = ''
@@ -273,9 +265,10 @@ def get_urls(sqlquery, params):
             date = record[0].rstrip()
             url = record[7].rstrip()
             reply += f'[{scorer.title()} {score} vs {opposition.title()} (assist: {assist.title()}), {season} {competition.title()} - {date}](https://imgur.com/{url})'
-            reply += '\n\n'
+            reply += '\n'
             reply = reply.replace("Ucl", "UCL")
             reply = reply.replace("Icc", "ICC")
+            reply = reply.replace("Spal", "SPAL")
 
         return reply
 

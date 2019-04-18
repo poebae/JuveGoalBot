@@ -1,6 +1,3 @@
-# !/usr/bin/env python
-# coding=utf-8
-
 # Bot to serve Juventus goals to /r/juve
 # Author: /u/droidonomy
 
@@ -9,8 +6,6 @@ import prawcore
 import psycopg2
 import time
 import unidecode
-import re
-import os
 import credentials
 
 
@@ -50,7 +45,6 @@ def parse_body_assist(body):
     print('user query: {}'.format(body))
     # Split the query into different sections at each comma
     query = body.split(',')
-
     return query
 
 
@@ -65,7 +59,6 @@ def parse_body_team(body):
     print('user query: {}'.format(body))
     # Split the query into different sections at each comma
     query = body.split(',')
-
     return query
 
 
@@ -137,7 +130,7 @@ def get_goal_items(query):
 
         # If the second query does not state a competition
         else:
-            # add second query to params
+            # Add second query to params
             params.append(second_query)
             if 0 <= 2 < len(query):
                 third_query = query[2].strip()
@@ -210,7 +203,7 @@ def get_assist_items(query):
         # If 2 queries and query 2 is not a competition
         else:
 
-            # add second query to params
+            # Add second query to params
             params.append(second_query)
 
             # If queries > 2
@@ -223,14 +216,12 @@ def get_assist_items(query):
                     sqlquery = '''SELECT date, opposition, result, competition, season, scorer, assist, url FROM juve_goals WHERE assist = %s AND opposition = %s AND season = %s; '''
                     return sqlquery, params
 
-            # Query specifically for player and opposition
+            ## Query specifically for player and opposition
             # sqlquery = '''SELECT date, opposition, result, competition, season, scorer, assist, url FROM juve_goals WHERE assist = %s AND opposition = %s; '''
-            # print("No league specified")
             # return sqlquery, params
 
             # Query specifically for assister and scorer
             sqlquery = '''SELECT date, opposition, result, competition, season, scorer, assist, url FROM juve_goals WHERE assist = %s AND scorer = %s; '''
-            # print("Assister and scorer query")
             return sqlquery, params
 
 
@@ -270,31 +261,18 @@ def get_urls(sqlquery, params):
     # Define our connection string
     conn_string = credentials.login
 
-    # print the connection string we will use to connect
-    # print("Connecting to database\n	->%s" % (conn_string))
-
-    # get a connection, if a connect cannot be made an exception will be raised here
+    # Get a connection, if a connect cannot be made an exception will be raised here
     conn = psycopg2.connect(conn_string)
 
     # conn.cursor will return a cursor object, you can use this cursor to perform queries
     cursor = conn.cursor()
     print("Connected!\n")
 
-    cursor = conn.cursor()
     # Execute query to db for data
     cursor.execute(sqlquery, params)
     reply = ''
 
     if cursor:
-        # For each record that comes back, loop through and build the reply
-        # record[5] = scorer
-        # record[2] = score
-        # record[1] = opposition
-        # record[6] = assist
-        # record[4] = season
-        # record[3] = competition
-        # record[0] = date
-        # record[7] = url
 
         for record in cursor:
             scorer = record[5].rstrip()
@@ -310,6 +288,7 @@ def get_urls(sqlquery, params):
             reply += '\n\n'
             reply = reply.replace("Ucl", "UCL")
             reply = reply.replace("Icc", "ICC")
+            reply = reply.replace("Spal", "SPAL")
 
         reply += FOOTER
         return reply
@@ -330,12 +309,10 @@ def main():
 
                 # Pull in gifs of goals
                 if "!goal" in body:
-                    # print("!goal command executed")
 
                     # Store list of existing comments associated with goals
                     with open('logs/goalComments.txt', 'r') as outfile:
                         seen_comments = outfile.read().splitlines()
-                    # print(comment.id)
 
                     # Check if comment already answered
                     if comment.id not in seen_comments:
@@ -378,17 +355,13 @@ def main():
 
                                 print("Sleep for 10...")
                                 time.sleep(10)
-                    # else:
-                    #     print('This clip has already been requested')
 
                 # Pull in gifs of assists
                 if "!assist" in body:
-                    # print("!assist commmand executed")
 
                     # Store list of existing comments associated with assists
                     with open('logs/assistComments.txt', 'r') as outfile:
                         seen_comments = outfile.read().splitlines()
-                    # print(comment.id)
 
                     # Check if comment already answered
                     if comment.id not in seen_comments:
@@ -432,17 +405,13 @@ def main():
 
                                 print("Sleep for 10...")
                                 time.sleep(10)
-                    # else:
-                    #     print('This clip has already been requested')
 
                 # Pull in gifs of all goals against specific team
                 if "!team" in body:
-                    # print("!team command executed")
 
                     # Store list of existing comments associated with team goals
                     with open('logs/teamComments.txt', 'r') as outfile:
                         seen_comments = outfile.read().splitlines()
-                    # print(comment.id)
 
                     # See if the comment has not already been answered.
                     if comment.id not in seen_comments:
@@ -477,7 +446,7 @@ def main():
                                 print("Sleep for 10...")
                                 time.sleep(10)
 
-                            # if query returned no results
+                            # If query returned no results
                             else:
                                 reply = 'Clip not found. [Check out this thread for the correct format](https://www.reddit.com/r/Juve/comments/9quyaa/i_created_a_bot_to_show_juve_goals_on_demand/)'
                                 comment.reply(reply)
@@ -486,8 +455,6 @@ def main():
 
                                 print("Sleep for 10...")
                                 time.sleep(10)
-                    # else:
-                    #     print('This clip has already been requested')
 
             # Get all new submissions from designated subreddit
             for submission in r.subreddit('juve_goal_bot').stream.submissions(pause_after=-1):
