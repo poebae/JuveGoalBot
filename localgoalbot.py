@@ -48,16 +48,6 @@ def parse_body_team(body):
     return query
 
 
-def parse_thread_title(title):
-    # Find thread titles that contain the keyword
-    start_index = title.find('Juventus vs ')
-    # Remove first 11 characters to pull request
-    title = title[start_index + 13:]
-    query = title.split(',')
-    print(query)
-    return query
-
-
 def get_goal_items(query):
     # Create an empty array for params to be added to
     params = []
@@ -133,11 +123,11 @@ def get_assist_items(query):
     # Create an empty array for params to be added to
     params = []
     # Designate variable for first portion of the query
-    player_name = query[0].strip()
+    assister_name = query[0].strip()
     # Remove special characters
-    player_name_string = unidecode.unidecode(player_name)
+    assister_name_string = unidecode.unidecode(assister_name)
     # Add player_name to params array
-    params.append(player_name_string)
+    params.append(assister_name_string)
 
     # If only the assister name is given
     if len(query) == 1:
@@ -233,6 +223,7 @@ def get_team_items(query):
             sqlquery = '''SELECT date, opposition, result, competition, season, scorer, assist, url FROM juve_goals WHERE opposition = %s; '''
             return sqlquery, params
 
+    # Otherwise just show all goals against specified team
     else:
         sqlquery = '''SELECT date, opposition, result, competition, season, scorer, assist, url FROM juve_goals WHERE opposition = %s; '''
         return sqlquery, params
@@ -242,14 +233,14 @@ def get_urls(sqlquery, params):
     # Define our connection string
     conn_string = credentials.login
 
-    # get a connection, if a connect cannot be made an exception will be raised here
+    # Get a connection, if a connect cannot be made an exception will be raised here
     conn = psycopg2.connect(conn_string)
 
     # conn.cursor will return a cursor object, you can use this cursor to perform queries
     cursor = conn.cursor()
     print("Connected!\n")
 
-    # Execute query to db for data
+    # Query database for given params
     cursor.execute(sqlquery, params)
     reply = ''
 
@@ -264,102 +255,112 @@ def get_urls(sqlquery, params):
             competition = record[3].rstrip()
             date = record[0].rstrip()
             url = record[7].rstrip()
-            reply += f'[{scorer.title()} {score} vs {opposition.title()} (assist: {assist.title()}), {season} {competition.title()} - {date}](https://imgur.com/{url})'
+
+            if url != 'MISSING':
+                reply += f'[{scorer.title()} {score} vs {opposition.title()} (assist: {assist.title()}), {season} {competition.title()} - {date}](https://imgur.com/{url})'
+            else:
+                reply += f'{scorer.title()} {score} vs {opposition.title()} (assist: {assist.title()}), {season} {competition.title()} - {date} - Help [me](/u/droidonomy) find this clip!'
             reply += '\n'
-            reply = reply.replace("Ucl", "UCL")
-            reply = reply.replace("Icc", "ICC")
-            reply = reply.replace("Spal", "SPAL")
+
+        if len(reply.split('\n')) > 10:
+            reply += str(len(reply.split('\n')) -1) + ' Goals displayed.'
+
+        reply = reply.replace("Ucl", "UCL")
+        reply = reply.replace("Icc", "ICC")
+        reply = reply.replace("Spal", "SPAL")
+        reply = reply.replace("Bate", "BATE")
+        reply = reply.replace("Mls", "MLS")
 
         return reply
 
 
 def main():
-    # Get keyboard input
-    body = input("Enter query: ")
+    while True: # Get keyboard input
+        body = input("Enter query: ")
 
-    # Pull in gifs of goals
-    if "!goal" in body:
+        # Pull in gifs of goals
+        if "!goal" in body:
 
-        body = body.lower()
-        query = parse_body_goal(body)
-        sql = get_goal_items(query)
+            body = body.lower()
+            query = parse_body_goal(body)
+            sql = get_goal_items(query)
 
-        # If query is invalid
-        if sql is None:
-            reply = 'It looks like your request is in a format I do not understand. [Check out this thread for the correct format](https://www.reddit.com/r/Juve/comments/9quyaa/i_created_a_bot_to_show_juve_goals_on_demand/)'
-            print(reply)
-
-        # If query is valid
-        else:
-            print("SQL: ", sql)
-            sqlThing = sql[0]
-            sqlParams = sql[1]
-            reply = get_urls(sqlThing, sqlParams)
-
-            # Create and send the reply
-            if reply:
+            # If query is invalid
+            if sql is None:
+                reply = 'It looks like your request is in a format I do not understand. [Check out this thread for the correct format](https://www.reddit.com/r/Juve/comments/9quyaa/i_created_a_bot_to_show_juve_goals_on_demand/)'
                 print(reply)
 
-            # Query returned no results
+            # If query is valid
             else:
-                reply = 'Clip not found. [Check out this thread for the correct format](https://www.reddit.com/r/Juve/comments/9quyaa/i_created_a_bot_to_show_juve_goals_on_demand/)'
+                print("SQL: ", sql)
+                sqlThing = sql[0]
+                sqlParams = sql[1]
+                reply = get_urls(sqlThing, sqlParams)
+
+                # Create and send the reply
+                if reply:
+                    print(reply)
+
+                # Query returned no results
+                else:
+                    reply = 'Clip not found. [Check out this thread for the correct format](https://www.reddit.com/r/Juve/comments/9quyaa/i_created_a_bot_to_show_juve_goals_on_demand/)'
+                    print(reply)
+
+        # Pull in gifs of assists
+        if "!assist" in body:
+
+            body = body.lower()
+            query = parse_body_assist(body)
+            sql = get_assist_items(query)
+
+            # Query not in correct format
+            if sql is None:
+                reply = 'It looks like your request is in a format I do not understand. [Check out this thread for the correct format](https://www.reddit.com/r/Juve/comments/9quyaa/i_created_a_bot_to_show_juve_goals_on_demand/)'
                 print(reply)
 
-    # Pull in gifs of assists
-    if "!assist" in body:
-
-        body = body.lower()
-        query = parse_body_assist(body)
-        sql = get_assist_items(query)
-
-        # Query not in correct format
-        if sql is None:
-            reply = 'It looks like your request is in a format I do not understand. [Check out this thread for the correct format](https://www.reddit.com/r/Juve/comments/9quyaa/i_created_a_bot_to_show_juve_goals_on_demand/)'
-            print(reply)
-
-        # If query is valid
-        else:
-            print("SQL: ", sql)
-            sqlThing = sql[0]
-            sqlParams = sql[1]
-            reply = get_urls(sqlThing, sqlParams)
-
-            # Create and send the reply
-            if reply:
-                print(reply)
-
-            # Query returned no results
+            # If query is valid
             else:
-                reply = 'Clip not found. [Check out this thread for the correct format](https://www.reddit.com/r/Juve/comments/9quyaa/i_created_a_bot_to_show_juve_goals_on_demand/)'
+                print("SQL: ", sql)
+                sqlThing = sql[0]
+                sqlParams = sql[1]
+                reply = get_urls(sqlThing, sqlParams)
+
+                # Create and send the reply
+                if reply:
+                    print(reply)
+
+                # Query returned no results
+                else:
+                    reply = 'Clip not found. [Check out this thread for the correct format](https://www.reddit.com/r/Juve/comments/9quyaa/i_created_a_bot_to_show_juve_goals_on_demand/)'
+                    print(reply)
+
+        # Pull in gifs of all goals against specific team
+        if "!team" in body:
+
+            body = body.lower()
+            query = parse_body_team(body)
+            sql = get_team_items(query)
+
+            # Query not in correct format
+            if sql is None:
+                reply = 'It looks like your request is in a format I do not understand. [Check out this thread for the correct format](https://www.reddit.com/r/Juve/comments/9quyaa/i_created_a_bot_to_show_juve_goals_on_demand/)'
                 print(reply)
 
-    # Pull in gifs of all goals against specific team
-    if "!team" in body:
-
-        body = body.lower()
-        query = parse_body_team(body)
-        sql = get_team_items(query)
-
-        # Query not in correct format
-        if sql is None:
-            reply = 'It looks like your request is in a format I do not understand. [Check out this thread for the correct format](https://www.reddit.com/r/Juve/comments/9quyaa/i_created_a_bot_to_show_juve_goals_on_demand/)'
-            print(reply)
-
-        # If query is valid
-        else:
-            print("SQL: ", sql)
-            sqlThing = sql[0]
-            sqlParams = sql[1]
-            reply = get_urls(sqlThing, sqlParams)
-
-            # Create and send the reply
-            if reply:
-                print(reply)
-
-            # if query returned no results
+            # If query is valid
             else:
-                reply = 'Clip not found. [Check out this thread for the correct format](https://www.reddit.com/r/Juve/comments/9quyaa/i_created_a_bot_to_show_juve_goals_on_demand/)'
-                print(reply)
+                print("SQL: ", sql)
+                sqlThing = sql[0]
+                sqlParams = sql[1]
+                reply = get_urls(sqlThing, sqlParams)
+
+                # Create and send the reply
+                if reply:
+                    print(reply)
+
+                # if query returned no results
+                else:
+                    reply = 'Clip not found. [Check out this thread for the correct format](https://www.reddit.com/r/Juve/comments/9quyaa/i_created_a_bot_to_show_juve_goals_on_demand/)'
+                    print(reply)
 
 if __name__ == '__main__':
     main()

@@ -7,6 +7,7 @@ import psycopg2
 import time
 import unidecode
 import credentials
+import re
 
 
 def login():
@@ -115,7 +116,6 @@ def get_goal_items(query):
 
             # Build a query specific to search for player and competion
             sqlquery = '''SELECT date, opposition, result, competition, season, scorer, assist, url FROM juve_goals WHERE scorer = %s AND competition = %s; '''
-            print("Searching by competition")
             return sqlquery, params
 
         elif second_query[0].isdigit():
@@ -125,7 +125,6 @@ def get_goal_items(query):
 
         elif second_query is None:
             # TODO handle this better....
-            print('No second query item')
             return("no item")
 
         # If the second query does not state a competition
@@ -140,7 +139,6 @@ def get_goal_items(query):
 
             # Query specifically for player and opposition
             sqlquery = '''SELECT date, opposition, result, competition, season, scorer, assist, url FROM juve_goals WHERE scorer = %s AND opposition = %s; '''
-            print("No league specified")
             return sqlquery, params
 
 
@@ -191,7 +189,6 @@ def get_assist_items(query):
 
             # Build a query specific to search for player and competion
             sqlquery = '''SELECT date, opposition, result, competition, season, scorer, assist, url FROM juve_goals WHERE assist = %s AND competition = %s; '''
-            print("Searching by competition")
             return sqlquery, params
 
         # If 2 queries and query 2 is a season
@@ -202,11 +199,7 @@ def get_assist_items(query):
 
         # If 2 queries and query 2 is not a competition
         else:
-
-            # Add second query to params
             params.append(second_query)
-
-            # If queries > 2
             if 0 <= 2 < len(query):
                 third_query = query[2].strip()
 
@@ -252,6 +245,7 @@ def get_team_items(query):
             sqlquery = '''SELECT date, opposition, result, competition, season, scorer, assist, url FROM juve_goals WHERE opposition = %s; '''
             return sqlquery, params
 
+    # Otherwise just show all goals against specified team
     else:
         sqlquery = '''SELECT date, opposition, result, competition, season, scorer, assist, url FROM juve_goals WHERE opposition = %s; '''
         return sqlquery, params
@@ -284,11 +278,20 @@ def get_urls(sqlquery, params):
             date = record[0].rstrip()
             url = record[7].rstrip()
 
-            reply += f'[{scorer.title()} {score} vs {opposition.title()} (assist: {assist.title()}), {season} {competition.title()} - {date}](https://imgur.com/{url})'
+            if url != 'MISSING':
+                reply += f'[{scorer.title()} {score} vs {opposition.title()} (assist: {assist.title()}), {season} {competition.title()} - {date}](https://imgur.com/{url})'
+            else:
+                reply += f'{scorer.title()} {score} vs {opposition.title()} (assist: {assist.title()}), {season} {competition.title()} - {date} - Help [me](/u/droidonomy) find this clip!'
             reply += '\n\n'
-            reply = reply.replace("Ucl", "UCL")
-            reply = reply.replace("Icc", "ICC")
-            reply = reply.replace("Spal", "SPAL")
+
+        if len(reply.split('\n\n')) > 10:
+            reply += '\n\n' + str(len(reply.split('\n\n')) -1) + ' goals displayed.\n\n'
+
+        reply = reply.replace("Ucl", "UCL")
+        reply = reply.replace("Icc", "ICC")
+        reply = reply.replace("Spal", "SPAL")
+        reply = reply.replace("Bate", "BATE")
+        reply = reply.replace("Mls", "MLS")
 
         reply += FOOTER
         return reply
@@ -328,7 +331,7 @@ def main():
                             with open('logs/goalComments.txt', 'a+') as outfile:
                                 outfile.write(comment.id + '\n')
 
-                            print("not valid query..")
+                            print("Invalid query..")
                             time.sleep(10)
 
                         # If query is valid
@@ -377,7 +380,7 @@ def main():
                             with open('logs/assistComments.txt', 'a+') as outfile:
                                 outfile.write(comment.id + '\n')
 
-                            print("not valid query..")
+                            print("Invalid query..")
                             time.sleep(10)
 
                         # If query is valid
@@ -427,7 +430,7 @@ def main():
                             with open('logs/teamComments.txt', 'a+') as outfile:
                                 outfile.write(comment.id + '\n')
 
-                            print("not valid query..")
+                            print("Invalid query..")
                             time.sleep(10)
 
                         # If query is valid
