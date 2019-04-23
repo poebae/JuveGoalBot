@@ -123,9 +123,9 @@ def get_goal_items(query):
             sqlquery = '''SELECT date, opposition, result, competition, season, scorer, assist, url FROM juve_goals WHERE scorer = %s AND season = %s; '''
             return sqlquery, params
 
-        elif second_query is None:
-            # TODO handle this better....
-            return("no item")
+        # elif second_query is None:
+        #     # TODO handle this better....
+        #     return("no item")
 
         # If the second query does not state a competition
         else:
