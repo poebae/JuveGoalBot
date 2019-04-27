@@ -278,10 +278,17 @@ def get_urls(sqlquery, params):
             date = record[0].rstrip()
             url = record[7].rstrip()
 
-            if url != 'MISSING':
-                reply += f'[{scorer.title()} {score} vs {opposition.title()} (assist: {assist.title()}), {season} {competition.title()} - {date}](https://imgur.com/{url})'
-            else:
-                reply += f'{scorer.title()} {score} vs {opposition.title()} (assist: {assist.title()}), {season} {competition.title()} - {date} - Help [me](/u/droidonomy) find this clip!'
+            if assist == 'missing' and url == 'missing':
+                reply += f'{scorer.title()} {score} vs {opposition.title()} (assist: MISSING), {season} {competition.title()} - {date} - [Help me find this clip!](https://old.reddit.com/r/juve_goal_bot/comments/bi1l0w/report_missing_videosassist_here/)'
+
+            elif url == 'missing':
+                reply += f'{scorer.title()} {score} vs {opposition.title()} (assist: {assist.title()}), {season} {competition.title()} - {date} - [Help me find this clip!](https://old.reddit.com/r/juve_goal_bot/comments/bi1l0w/report_missing_videosassist_here/)'
+
+            elif assist == 'missing':
+                reply += f'[{scorer.title()} {score} vs {opposition.title()} (assist: MISSING), {season} {competition.title()} - {date}](https://imgur.com/{url}) - [report assist](https://old.reddit.com/r/juve_goal_bot/comments/bi1l0w/report_missing_videosassist_here/)'
+
+            else: reply += f'[{scorer.title()} {score} vs {opposition.title()} (assist: {assist.title()}), {season} {competition.title()} - {date}](https://imgur.com/{url})'
+
             reply += '\n\n'
 
         if len(reply.split('\n\n')) > 10:
