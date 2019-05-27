@@ -278,10 +278,7 @@ def get_urls(sqlquery, params):
             date = record[0].rstrip()
             url = record[7].rstrip()
 
-            if assist == 'missing' and url == 'missing':
-                reply += f'{scorer.title()} {score} vs {opposition.title()} (assist: MISSING), {season} {competition.title()} - {date} - [Help me find this clip!](https://old.reddit.com/r/juve_goal_bot/comments/bi1l0w/report_missing_videosassist_here/)'
-
-            elif url == 'missing':
+            if url == 'missing':
                 reply += f'{scorer.title()} {score} vs {opposition.title()} (assist: {assist.title()}), {season} {competition.title()} - {date} - [Help me find this clip!](https://old.reddit.com/r/juve_goal_bot/comments/bi1l0w/report_missing_videosassist_here/)'
 
             elif assist == 'missing':

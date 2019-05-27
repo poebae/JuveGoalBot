@@ -268,7 +268,7 @@ def get_urls(sqlquery, params):
             reply += '\n\n'
 
         if len(reply.split('\n')) > 10:
-            reply += str(len(reply.split('\n')) -1) + ' Goals displayed.'
+            reply += '\n\n' + str(len(reply.split('\n\n')) -1) + ' goals displayed.\n\n'
 
         reply = reply.replace("Ucl", "UCL")
         reply = reply.replace("Icc", "ICC")
