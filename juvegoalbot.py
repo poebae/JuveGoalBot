@@ -279,10 +279,10 @@ def get_urls(sqlquery, params):
             url = record[7].rstrip()
 
             if url == 'missing':
-                reply += f'{scorer.title()} {score} vs {opposition.title()} (assist: {assist.title()}), {season} {competition.title()} - {date} - [Help me find this clip!](https://old.reddit.com/r/juve_goal_bot/comments/bi1l0w/report_missing_videosassist_here/)'
+                reply += f'{scorer.title()} {score} vs {opposition.title()} (assist: {assist.title()}), {season} {competition.title()} - {date} - [Help me find this clip!](https://reddit.com/message/compose/?to=droidonomy)'
 
             elif assist == 'missing':
-                reply += f'[{scorer.title()} {score} vs {opposition.title()} (assist: MISSING), {season} {competition.title()} - {date}](https://imgur.com/{url}) - [report assist](https://old.reddit.com/r/juve_goal_bot/comments/bi1l0w/report_missing_videosassist_here/)'
+                reply += f'[{scorer.title()} {score} vs {opposition.title()} (assist: MISSING), {season} {competition.title()} - {date}](https://imgur.com/{url}) - [report assist](https://reddit.com/message/compose/?to=droidonomy)'
 
             else: reply += f'[{scorer.title()} {score} vs {opposition.title()} (assist: {assist.title()}), {season} {competition.title()} - {date}](https://imgur.com/{url})'
 
