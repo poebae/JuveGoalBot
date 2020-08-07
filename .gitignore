@@ -11,3 +11,4 @@ juve_bot.sql
 nohup.out
 credentials.py
 config.pyc
+env/
