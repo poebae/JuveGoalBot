@@ -1,4 +1,4 @@
- ,opposition,result,competition,season,scorer,assist,url,pen
+date,opposition,result,competition,season,scorer,assist,url,pen
 1998/08/29,lazio,1-1,supercoppa,1998-99,del piero,penalty,g3wwS3Z,
 1998/09/10,ravenna,1-0,coppa,1998-99,di livio,none,6VzVzz1,
 1998/09/10,ravenna,2-0,coppa,1998-99,fonseca,blanchard,wmwRnrQ,
@@ -2048,3 +2048,8 @@
 2020/08/01,roma,1-0,serie a,2019-20,higuain,rabiot,3SrYpSx,
 2020/08/07,lyon,1-1,ucl,2019-20,ronaldo,penalty,ZiI5Xu7,
 2020/08/07,lyon,2-1,ucl,2019-20,ronaldo,bernardeschi,vH0ov0p,
+2020/09/13,novara,1-0,friendly,2020-21,ronaldo,kulusevski,OmHhGQc,
+2020/09/13,novara,2-0,friendly,2020-21,ramsey,costa,eNWUnMY,
+2020/09/13,novara,3-0,friendly,2020-21,pjaca,none,ARM1a92,
+2020/09/13,novara,4-0,friendly,2020-21,portanova,bentancur,Z6xVbYL,
+2020/09/13,novara,5-0,friendly,2020-21,portanova,nicolussi,KlVCEPb,

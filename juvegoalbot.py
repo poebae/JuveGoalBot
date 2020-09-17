@@ -103,6 +103,9 @@ def get_goal_items(query):
            second_query == "coppa" or      \
            second_query == "friendly" or   \
            second_query == "supercoppa" or \
+           second_query == "uefa" or \
+           second_query == "villar perosa" or \
+           second_query == "intertoto" or \
            second_query == "europa":
 
             # Add second portion to the params
@@ -464,7 +467,7 @@ def main():
                                 time.sleep(10)
 
             # Get all new submissions from designated subreddit
-            for submission in r.subreddit('juve_goal_bot').stream.submissions(pause_after=-1):
+            for submission in r.subreddit('none').stream.submissions(pause_after=-1):
                 if submission is None:
                     break
 
