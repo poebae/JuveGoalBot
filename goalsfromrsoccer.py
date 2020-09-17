@@ -5,6 +5,9 @@ import time
 from datetime import datetime, timedelta
 
 #TODO: get fixture dates and times from subreddit.wiki[“trezebot/fixtures”].content_md will give you the text
+#TODO: get AA/mirrors from /r/soccer goal submissions
+#TODO: send live goals to match thread
+#TODO: rehost on imgur
 
 def login():
     r = praw.Reddit('juvegoalbot')
@@ -14,6 +17,7 @@ def main():
     end_time = datetime.now() + timedelta(hours=3)
     r = login()
     message = ""
+    newSubmission = ""
     submissions_checked = []
 
     while datetime.now() < end_time:
@@ -25,7 +29,7 @@ def main():
                     break
 
                 # Search for submissions containing Juventus and flaired as Media or Mirror
-                if re.match("Juventus", submission.title, re.IGNORECASE) and (submission.link_flair_text == "Media" or submission.link_flair_text == "Mirror"):
+                if re.search(".*Juventus.*", submission.title, re.IGNORECASE) and (submission.link_flair_text == "Media" or submission.link_flair_text == "Mirror"):
                     with open("logs/submissionsChecked.txt", "r") as f:
                         submissions_checked = f.read()
                         submissions_checked = submissions_checked.split("\n")
@@ -33,8 +37,11 @@ def main():
 
                     # If submission hasn't been replied to
                     if submission.id not in submissions_checked:
-                        print(submission.title)
-                        message += "[" + submission.title + "](" + submission.url + ")" + " - " + "[" + str(submission.author) + "](" + submission.permalink + ")" + '\n\n'
+                        print("Found: " + submission.title + '\n')
+                        newGoal = "[" + submission.title + "](" + submission.url + ") | " + str(submission.author) + " | [discuss](" + submission.permalink + ")" + '\n\n'
+
+                        # Append the new goal to the summary that's being prepared for the post-match thread
+                        message += newGoal
 
                         # Add submission id to list
                         submissions_checked.append(submission.id)
@@ -43,6 +50,11 @@ def main():
                         with open("logs/submissionsChecked.txt", "w") as f:
                             for submission.id in submissions_checked:
                                 f.write(submission.id + "\n")
+
+                        # If there's an ongoing match thread, post the goal to it immediately
+                        for submission in r.subreddit('juve_goal_bot+juve').search("Match Thread",time_filter='day'):
+                            print("Posting to thread: " + submission.title + ':\n\n' + newGoal)
+                            submission.reply(newGoal)
 
             # Search through comments
             for top_level_comment in r.subreddit('juve_goal_bot').stream.comments(pause_after=-1):
