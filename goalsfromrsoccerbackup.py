@@ -4,7 +4,7 @@ import re
 import time
 from datetime import datetime, timedelta
 
-#TODO: post alternate angles to post-match thread
+#TODO: get AA/mirrors from /r/soccer goal submissions
 #TODO: get fixture dates and times from subreddit.wiki[“trezebot/fixtures”].content_md will give you the text
 #TODO: rehost on imgur
 
@@ -17,7 +17,6 @@ def main():
     r = login()
     message = ""
     newSubmission = ""
-    goalName = ""
     submissions_checked = []
 
     while datetime.now() < end_time:
@@ -39,7 +38,6 @@ def main():
                     if submission.id not in submissions_checked:
                         print("Found: " + submission.title + '\n')
                         newGoal = "[" + submission.title + "](" + submission.url + ") | " + str(submission.author) + " | [discuss](" + submission.permalink + ")" + '\n\n'
-                        goalName = submission.title
 
                         # Append the new goal to the summary that's being prepared for the post-match thread
                         message += newGoal
@@ -54,12 +52,11 @@ def main():
 
                         # If there's an ongoing match thread, post the goal to it immediately
                         for submission in r.subreddit('juve_goal_bot+juve').search("Match Thread",time_filter='day'):
-                            print("Posting to thread: " + submission.title + ':\n' + newGoal)
+                            print("Posting to thread: " + submission.title + ':\n\n' + newGoal)
                             submission.reply(newGoal)
 
                     # Search for alternate angles
                     for top_level_comment in submission.comments:
-                        submission.comments.replace_more(limit=None)
                         for second_level_comment in top_level_comment.replies:
 
                             with open("logs/alternateAngles.txt", "r") as f:
@@ -73,6 +70,13 @@ def main():
                                 alternateAngle = second_level_comment.body + " | " + str(second_level_comment.author) + " | [discuss](" + second_level_comment.permalink + ")" + '\n\n'
                                 print(alternateAngle)
 
+                                # If there's an ongoing match thread, reply to our own comment with the alternate angle
+                                for submission in r.subreddit('juve_goal_bot+juve').search('flair:"Match Thread"',time_filter='day'):
+                                    for top_level_comment in submission.comments:
+                                        if top_level_comment.author == 'JuveGoalBot': #TODO AND IT MATCHES THE LINK
+                                            print("FOUND TOP LEVEL COMMENT BY JUVEGOALBOT Replying to comment: " + top_level_comment.body + ':\n\n' + alternateAngle)
+                                            #comment.reply(alternateAngle)
+
                                 # Add submission id to list
                                 alternate_checked.append(second_level_comment.id)
 
@@ -80,16 +84,6 @@ def main():
                                 with open("logs/alternateAngles.txt", "w") as f:
                                     for second_level_comment.id in alternate_checked:
                                         f.write(second_level_comment.id + "\n")
-
-                                # If there's an ongoing match thread
-                                for submission in r.subreddit('juve_goal_bot+juve').search("Match Thread",time_filter='day'):
-                                    if submission.link_flair_text == "Match Thread":
-                                        for top_level_comment in submission.comments:
-                                            # If the title of the goal matches a link posted by the bot
-                                            if top_level_comment.author == 'JuveGoalBot' and goalName in top_level_comment.body:
-                                                # Reply with the alternate angle
-                                                print("Replying to comment: " + top_level_comment.body + ':\n' + alternateAngle + '\n')
-                                                top_level_comment.reply(alternateAngle)
 
             # Search through comments
             for top_level_comment in r.subreddit('juve_goal_bot').stream.comments(pause_after=-1):
@@ -107,7 +101,7 @@ def main():
 
                     # If comment hasn't been replied to
                     if top_level_comment.id not in comments_replied_to and message != "":
-                        print("Replying to comment " + top_level_comment.id + ':\n' + message)
+                        print("Replying to comment " + top_level_comment.id + ':\n\n' + message)
                         top_level_comment.reply(message)
 
                         # Add comment id to list
