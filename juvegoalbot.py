@@ -9,17 +9,15 @@ import unidecode
 import credentials
 import re
 
-
-def login():
-    r = praw.Reddit('juvegoalbot')
-    return r
-
 FOOTER = '''___\n\n
 ^^[Wiki](https://www.reddit.com/r/juve_goal_bot/wiki/index)
 ^^| ^^[Data](https://www.reddit.com/r/juve_goal_bot/wiki/dataset)
 ^^| ^^[Usage](https://www.reddit.com/r/juve_goal_bot/wiki/usage)
 ^^| ^^[Creator](/u/droidonomy)'''
 
+def login():
+    r = praw.Reddit('juvegoalbot')
+    return r
 
 def parse_body_goal(body):
     # Find comments that start with the keyword and index the characters
@@ -466,50 +464,52 @@ def main():
                                 print("Sleep for 10...")
                                 time.sleep(10)
 
-            # Get all new submissions from designated subreddit
-            for submission in r.subreddit('none').stream.submissions(pause_after=-1):
-                if submission is None:
-                    break
+            
+            # # Probably won't use - template code for automatically replying to match threads.
+            # # Get all new submissions from designated subreddit
+            # for submission in r.subreddit('none').stream.submissions(pause_after=-1):
+            #     if submission is None:
+            #         break
 
-                with open("logs/matchThreadPosts.txt", "r") as f:
-                    posts_replied_to = f.read()
-                    posts_replied_to = posts_replied_to.split("\n")
-                    posts_replied_to = list(filter(None, posts_replied_to))
+            #     with open("logs/matchThreadPosts.txt", "r") as f:
+            #         posts_replied_to = f.read()
+            #         posts_replied_to = posts_replied_to.split("\n")
+            #         posts_replied_to = list(filter(None, posts_replied_to))
 
-                # If submission hasn't been replied to
-                if submission.id not in posts_replied_to:
+            #     # If submission hasn't been replied to
+            #     if submission.id not in posts_replied_to:
 
-                    if re.search("Juventus vs", submission.title, re.IGNORECASE):
-                        # Reply to the post
-                        print("Bot replying to : ", submission.title)
+            #         if re.search("Juventus vs", submission.title, re.IGNORECASE):
+            #             # Reply to the post
+            #             print("Bot replying to : ", submission.title)
 
-                        title = submission.title.lower()
-                        query = parse_thread_title(title)
-                        sql = get_team_items(query)
+            #             title = submission.title.lower()
+            #             query = parse_thread_title(title)
+            #             sql = get_team_items(query)
 
-                        print("SQL: ", sql)
-                        sqlThing = sql[0]
-                        sqlParams = sql[1]
-                        reply = get_urls(sqlThing, sqlParams)
+            #             print("SQL: ", sql)
+            #             sqlThing = sql[0]
+            #             sqlParams = sql[1]
+            #             reply = get_urls(sqlThing, sqlParams)
 
-                        # Create and send the reply
-                        if reply:
-                            submission.reply(reply)
+            #             # Create and send the reply
+            #             if reply:
+            #                 submission.reply(reply)
 
-                            with open('logs/matchThreadPosts.txt', 'a+') as outfile:
-                                for post_id in posts_replied_to:
-                                    outfile.write(post_id + '\n')
+            #                 with open('logs/matchThreadPosts.txt', 'a+') as outfile:
+            #                     for post_id in posts_replied_to:
+            #                         outfile.write(post_id + '\n')
 
-                            print("Sleep for 10...")
-                            time.sleep(10)
+            #                 print("Sleep for 10...")
+            #                 time.sleep(10)
 
-                            # Add submission id to list
-                            posts_replied_to.append(submission.id)
+            #                 # Add submission id to list
+            #                 posts_replied_to.append(submission.id)
 
-                            # Write our updated list back to the file
-                            with open("logs/matchThreadPosts.txt", "w") as f:
-                                for post_id in posts_replied_to:
-                                    f.write(post_id + "\n")
+            #                 # Write our updated list back to the file
+            #                 with open("logs/matchThreadPosts.txt", "w") as f:
+            #                     for post_id in posts_replied_to:
+            #                         f.write(post_id + "\n")
 
         # For session time outs
         except prawcore.exceptions.ServerError as http_error:
