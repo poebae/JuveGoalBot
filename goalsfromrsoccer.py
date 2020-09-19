@@ -17,8 +17,9 @@ def main():
     r = login()
     message = ""
     newSubmission = ""
-    goalName = ""
-    submissions_checked = []
+    parentGoal = ""
+    replyTarget = ""
+    submissions_used = []
 
     while datetime.now() < end_time:
         try:
@@ -29,27 +30,26 @@ def main():
                     break
 
                 # Search for submissions containing Juventus and flaired as Media or Mirror
-                if re.search(".*Juventus.*", submission.title, re.IGNORECASE) and (submission.link_flair_text == "Media" or submission.link_flair_text == "Mirror"):
+                if re.search(".*Benfica.*", submission.title, re.IGNORECASE) and (submission.link_flair_text == "Media" or submission.link_flair_text == "Mirror"):
                     with open("logs/submissionsChecked.txt", "r") as f:
-                        submissions_checked = f.read()
-                        submissions_checked = submissions_checked.split("\n")
-                        submissions_checked = list(filter(None, submissions_checked))
+                        submissions_used = f.read()
+                        submissions_used = submissions_used.split("\n")
+                        submissions_used = list(filter(None, submissions_used))
 
-                    # If submission hasn't been replied to
-                    if submission.id not in submissions_checked:
-                        print("Found: " + submission.title + '\n')
+                    # If submission hasn't been used
+                    if submission.id not in submissions_used:
+                        print("Found: " + submission.title)
                         newGoal = "[" + submission.title + "](" + submission.url + ") | " + str(submission.author) + " | [discuss](" + submission.permalink + ")" + '\n\n'
-                        goalName = submission.title
 
                         # Append the new goal to the summary that's being prepared for the post-match thread
                         message += newGoal
 
                         # Add submission id to list
-                        submissions_checked.append(submission.id)
+                        submissions_used.append(submission.id)
 
                         # Write our updated list back to the file
                         with open("logs/submissionsChecked.txt", "w") as f:
-                            for submission.id in submissions_checked:
+                            for submission.id in submissions_used:
                                 f.write(submission.id + "\n")
 
                         # If there's an ongoing match thread, post the goal to it immediately
@@ -60,42 +60,39 @@ def main():
                     # Search for alternate angles
                     for top_level_comment in submission.comments:
                         submission.comments.replace_more(limit=None)
-                        for second_level_comment in top_level_comment.replies:
+                        if top_level_comment.stickied:
+                            for second_level_comment in top_level_comment.replies:
 
-                            with open("logs/alternateAngles.txt", "r") as f:
-                                alternate_checked = f.read()
-                                alternate_checked = alternate_checked.split("\n")
-                                alternate_checked = list(filter(None, alternate_checked))
+                                with open("logs/alternateAngles.txt", "r") as f:
+                                    alternate_checked = f.read()
+                                    alternate_checked = alternate_checked.split("\n")
+                                    alternate_checked = list(filter(None, alternate_checked))
 
-                            # If alternate angle hasn't already been used
-                            if second_level_comment.id not in alternate_checked and "http" in second_level_comment.body:
-                                print("Found Alternate Angle: " + second_level_comment.body + '\n')
-                                alternateAngle = second_level_comment.body + " | " + str(second_level_comment.author) + " | [discuss](" + second_level_comment.permalink + ")" + '\n\n'
-                                print(alternateAngle)
+                                # If alternate angle hasn't already been used
+                                if second_level_comment.id not in alternate_checked and "http" in second_level_comment.body:
+                                    print("Found AA: " + second_level_comment.body + '\n')
+                                    alternateAngle = second_level_comment.body + " | " + str(second_level_comment.author) + " | [discuss](" + second_level_comment.permalink + ")" + '\n\n'
+                                    parentGoal = submission.title
 
-                                # Add submission id to list
-                                alternate_checked.append(second_level_comment.id)
+                                    # Add submission id to list
+                                    alternate_checked.append(second_level_comment.id)
 
-                                # Write our updated list back to the file
-                                with open("logs/alternateAngles.txt", "w") as f:
-                                    for second_level_comment.id in alternate_checked:
-                                        f.write(second_level_comment.id + "\n")
+                                    # Write our updated list back to the file
+                                    with open("logs/alternateAngles.txt", "w") as f:
+                                        for second_level_comment.id in alternate_checked:
+                                            f.write(second_level_comment.id + "\n")
 
-                                # If there's an ongoing match thread
-                                for submission in r.subreddit('juve_goal_bot+juve').search("Match Thread",time_filter='day'):
-                                    if submission.link_flair_text == "Match Thread":
+                                    # If there's an ongoing match thread, look for goals posted by the bot
+                                    for submission in r.subreddit('juve_goal_bot+juve').search("Match Thread",time_filter='day'):
                                         for top_level_comment in submission.comments:
                                             # If the title of the goal matches a link posted by the bot
-                                            if top_level_comment.author == 'JuveGoalBot' and goalName in top_level_comment.body:
+                                            if top_level_comment.author == 'JuveGoalBot' and parentGoal in top_level_comment.body:
                                                 # Reply with the alternate angle
-                                                print("Replying to comment: " + top_level_comment.body + ':\n' + alternateAngle + '\n')
+                                                print("Adding AA to " + top_level_comment.body + ':\n' + alternateAngle + '\n')
                                                 top_level_comment.reply(alternateAngle)
 
             # Search for post-match threads in /r/juve
-            for submission in r.subreddit('juve_goal_bot+juve').stream.submissions(pause_after=-1):
-                if submission is None:
-                    break
-
+            for submission in r.subreddit('juve_goal_bot+juve').search("Match Thread",time_filter='day'):
                 if submission.link_flair_text == "Post-Match Thread":
                     # Search through comments
                     for top_level_comment in submission.comments:
