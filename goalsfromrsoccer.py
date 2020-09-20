@@ -1,12 +1,9 @@
-#github
-
 import praw
 import prawcore
 import re
 import time
 from datetime import datetime, timedelta
 
-#TODO: post alternate angles to post-match thread
 #TODO: get fixture dates and times from subreddit.wiki[“trezebot/fixtures”].content_md will give you the text
 #TODO: rehost on imgur
 
@@ -21,22 +18,35 @@ def main():
     submissions_used = []
     goalPosts = []
     alternatePosts = []
+    matchThreadID = ""
+    postMatchThreadID = ""
 
     while datetime.now() < end_time:
         try:
 
-            # Find the ID of the match thread
-            for submission in r.subreddit('juve_goal_bot').search("Match Thread",time_filter='day'):
+            # Search through submissions on /r/juve
+            for submission in r.subreddit('juve_goal_bot').stream.submissions(pause_after=-1):
+            # for submission in r.subreddit('juve_goal_bot').stream.submissions(skip_existing=True, pause_after=-1):
+                if submission is None:
+                    break
+
+                # Find the ID of the Match Thread
                 if submission.link_flair_text == "Match Thread":
                     matchThreadID = submission.id
 
-            # Search through submissions on /r/soccer
-            for submission in r.subreddit('juve_goal_bot+soccer').stream.submissions(pause_after=-1):
+                # Find the ID of the Post-Match Thread
+                if submission.link_flair_text == "Post-Match Thread":
+                    postMatchThreadID = submission.id
+
+
+            # GATHER GOAL SUBMISSIONS #
+            # for submission in r.subreddit('soccer').stream.submissions(skip_existing=True, pause_after=-1):
+            for submission in r.subreddit('soccer').stream.submissions(pause_after=-1):
                 if submission is None:
                     break
 
                 # Search for submissions containing Juventus and flaired as Media or Mirror
-                if re.search(".*Fulham.*", submission.title, re.IGNORECASE) and (submission.link_flair_text == "Media" or submission.link_flair_text == "Mirror"):
+                if re.search("Tottenham", submission.title, re.IGNORECASE) and (submission.link_flair_text == "Media" or submission.link_flair_text == "Mirror"):
                 
                     with open("logs/submissionsChecked.txt", "r") as f:
                         submissions_used = f.read()
@@ -44,59 +54,61 @@ def main():
                         submissions_used = list(filter(None, submissions_used))
                     
                     # Add to list of submissions
-                    goalPosts.append(str(submission))
-
                     if submission.id not in submissions_used:
-                        print("Found: " + submission.title + " (" + submission.id + ")")
+                        print("Found: " +submission.title + " (" + submission.id + ")")
+                        goalPosts.append(str(submission))
 
-            # Post goals to the match thread
+            # POST GOALS TO MATCH THREAD #
             for i in goalPosts:
-                if i not in submissions_used:
-                    goalID = r.submission(id=i)
-                    newGoal = "[" + goalID.title + "](" + goalID.url + ") | " + str(goalID.author) + " | [discuss](" + goalID.permalink + ")" + '\n\n'
+                goalID = r.submission(id=i)
+                # If there's a match thread
+                if matchThreadID != "":
                     replyTarget = r.submission(id=matchThreadID)
-                    print("Posting to thread: " + replyTarget.title + ':\n' + goalID.title)
-                    replyTarget.reply(newGoal)
+                    # If goal hasn't been used
+                    if goalID.id not in submissions_used:
+                        newGoal = "[" + goalID.title + "](" + goalID.url + ") | " + str(goalID.author) + " | [discuss](" + goalID.permalink + ")" + '\n\n'
+                        # Post goals to the match thread
+                        print("Posting to " + replyTarget.title + " - " + goalID.title)
+                        replyTarget.reply(newGoal)
 
-                    # Add submission id to list of used submissions
-                    submissions_used.append(i)
+                        # Add submission id to list of used submissions
+                        submissions_used.append(i)
 
-                    # Write our updated list back to the file
-                    with open("logs/submissionsChecked.txt", "w") as f:
-                        for i in submissions_used:
-                            f.write(i + "\n")
+                        # Write our updated list back to the file
+                        with open("logs/submissionsChecked.txt", "w") as f:
+                            for i in submissions_used:
+                                f.write(i + "\n")
 
-                # Search for alternate angles
-                submission = r.submission(id=i)
-                for top_level_comment in submission.comments:
-                    submission.comments.replace_more(limit=None)
+                # COLLECT ALTERNATE ANGLES #
+                with open("logs/alternateAngles.txt", "r") as f:
+                    alternate_used = f.read()
+                    alternate_used = alternate_used.split("\n")
+                    alternate_used = list(filter(None, alternate_used))
+                for top_level_comment in goalID.comments:
+                    goalID.comments.replace_more(limit=None)
                     if top_level_comment.stickied:
                         for second_level_comment in top_level_comment.replies:
-                            with open("logs/alternateAngles.txt", "r") as f:
-                                alternate_used = f.read()
-                                alternate_used = alternate_used.split("\n")
-                                alternate_used = list(filter(None, alternate_used))
-
-                            # Add to list of alternate angles     
+                            # Add to list of alternate angles
                             if "http" in second_level_comment.body and second_level_comment.id not in alternate_used:
-                                print("Found AA for : " + submission.title + " (" + submission.id + ") AA: " + second_level_comment.id)
-                                parentgoal = submission.id
+                                parentgoal = goalID.id
                                 alternatePosts.append(second_level_comment.id)
 
-                # Post alternate angles to match thread top level comments
-                goalID = r.submission(id=i)
-                for j in alternatePosts:
-                    if j not in alternate_used:
-                    # For the match thread
-                        replyTarget = r.submission(id=matchThreadID)
-                        for top_level_comment in replyTarget.comments:
-                            # If the title of the goal matches a link posted by the bot
-                            if top_level_comment.author == 'JuveGoalBot' and goalID.title in top_level_comment.body:
-                                if second_level_comment.id not in alternate_used:
+                # POST ALTERNATE ANGLES #
+                for i in alternatePosts:
+                    if i not in alternate_used:
+                        # For the match thread
+                        if matchThreadID != "":
+                            replyTarget = r.submission(id=matchThreadID)
+                            for top_level_comment in replyTarget.comments:
+                                # If the title of the goal matches a link posted by the bot
+                                if top_level_comment.author == 'JuveGoalBot' and goalID.title in top_level_comment.body and second_level_comment.id not in alternate_used:
                                     alternateAngle = second_level_comment.body + " | " + str(second_level_comment.author) + " | [discuss](" + second_level_comment.permalink + ")" + '\n\n'
                                     # Reply with the alternate angle
-                                    print("Adding AA to " + top_level_comment.body + ':\n' + alternateAngle + '\n')
+                                    print("Adding AA to " + goalID.title + " (" + second_level_comment.id + ")")
                                     top_level_comment.reply(alternateAngle)
+                                    # Add alternate angle to post-match summary
+                                    goalSummary += "\n\n* [" + goalID.title + "](" + goalID.url + ") | " + str(goalID.author) + " | [discuss](" + goalID.permalink + ")" + '\n\n'
+                                    goalSummary += " * "+ alternateAngle
 
                                     # Add submission id to list
                                     alternate_used.append(second_level_comment.id)
@@ -106,32 +118,32 @@ def main():
                                         for second_level_comment.id in alternate_used:
                                             f.write(second_level_comment.id + "\n")
 
-            # Search for post-match threads in /r/juve
-            for submission in r.subreddit('juve_goal_bot').search("Post-Match Thread",time_filter='day'):
-                if submission.link_flair_text == "Post-Match Thread":
-                    # Search through comments
-                    for top_level_comment in submission.comments:
-                        # If we find a stickied comment that contains the keywords:
-                        if top_level_comment.stickied and ("highlights" in top_level_comment.body
-                                                        or "to this comment" in top_level_comment.body):
+            # POST GOAL SUMMARY IN POST-MATCH THREAD #
 
-                            with open("logs/postMatchThreads.txt", "r") as f:
-                                comments_replied_to = f.read()
-                                comments_replied_to = comments_replied_to.split("\n")
-                                comments_replied_to = list(filter(None, comments_replied_to))
+            if postMatchThreadID != "":
+                with open("logs/postMatchThreads.txt", "r") as f:
+                    comments_replied_to = f.read()
+                    comments_replied_to = comments_replied_to.split("\n")
+                    comments_replied_to = list(filter(None, comments_replied_to))
+                    replyTarget = r.submission(id=postMatchThreadID)
+                for top_level_comment in replyTarget.comments:
+                    # If we find a stickied comment that contains the keywords:
+                    if top_level_comment.stickied and ("highlights" in top_level_comment.body
+                                                    or "to this comment" in top_level_comment.body):
+                        # If comment hasn't been replied to
+                        if top_level_comment.id not in comments_replied_to and goalSummary != "":
+                            print("Posting goal summary to " + replyTarget.title + " (" + top_level_comment.id + "):\n")
 
-                            # If comment hasn't been replied to
-                            if top_level_comment.id not in comments_replied_to and goalSummary != "":
-                                print("Replying to comment " + top_level_comment.id + ':\n' + goalSummary)
-                                top_level_comment.reply(goalSummary)
+                            # Submit the goal summary
+                            top_level_comment.reply(goalSummary)
 
-                                # Add comment id to list
-                                comments_replied_to.append(top_level_comment.id)
+                            # Add comment id to list
+                            comments_replied_to.append(top_level_comment.id)
 
-                                # Write our updated list back to the file
-                                with open("logs/postMatchThreads.txt", "w") as f:
-                                    for top_level_comment.id in comments_replied_to:
-                                        f.write(top_level_comment.id + "\n")
+                            # Write our updated list back to the file
+                            with open("logs/postMatchThreads.txt", "w") as f:
+                                for top_level_comment.id in comments_replied_to:
+                                    f.write(top_level_comment.id + "\n")
 
         # For session time outs
         except prawcore.exceptions.ServerError as http_error:
