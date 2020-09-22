@@ -348,6 +348,7 @@ def main():
 
                             # Create and send the reply
                             if reply:
+                                print(f"Replying to {comment.id}: {reply}")
                                 comment.reply(reply)
                                 with open('logs/goalComments.txt', 'a+') as outfile:
                                     outfile.write(comment.id + '\n')

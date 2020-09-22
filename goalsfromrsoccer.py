@@ -1,20 +1,51 @@
+import credentials
+import datetime
+import json
 import praw
 import prawcore
 import re
+import requests
 import time
-from datetime import datetime, timedelta
+import telegram
+import urllib.request
+import youtube_dl
+from dateutil import tz, parser
+from bs4 import BeautifulSoup
 
-#TODO: ? Separate out finding mirrors manually based on goal.id ?
-#TODO: get fixture dates and times from subreddit.wiki[“trezebot/fixtures”].content_md will give you the text
-#TODO: sent me a message when the bot fires up and posts goals
 #TODO: rehost on imgur
+#TODO: move downloading and Telegram to further down the thread
 
 def login():
     r = praw.Reddit('juvegoalbot')
     return r
 
+# Find the kickoff time of the next match
+def getKickoff():
+    url = 'https://www.fctables.com/teams/juventus-187903/iframe/?type=team-next-match&country=108&team=187903&timezone=Australia/Sydney&time=24'
+    response = requests.get(url)
+    soup = BeautifulSoup(response.text, "html.parser")
+    nextMatch = (soup.find("div", {"class": "date"}).text)
+    teamA = (soup.find("div", {"class": "team_a"}).text)
+    teamB = (soup.find("div", {"class": "team_b"}).text)
+    kickoff = datetime.datetime.strptime(nextMatch, '%d %B %Y %H:%M')
+    countdown = kickoff - datetime.datetime.now()
+    print(f"Countdown to {teamA} vs {teamB} at {kickoff} is {countdown}")
+    return kickoff, countdown, teamA, teamB
+
+# Notify via Telegram
+def telegram_send(subid):
+    chat_id = credentials.telegram_chat_id
+    token = credentials.telegram_token
+    bot = telegram.Bot(token=token)
+    bot.send_video(chat_id=chat_id, video=open(f'videos/{subid}.mp4', 'rb'), supports_streaming=True)
+
+# Download video
+def ytdownload(subid,suburl):
+    ydl_opts = {'outtmpl': ('videos/{0}.mp4').format(subid)}
+    with youtube_dl.YoutubeDL(ydl_opts) as ydl:
+        ydl.download([f'{suburl}'])
+
 def main():
-    end_time = datetime.now() + timedelta(hours=3)
     r = login()
     goalSummary = ""
     matchThread = ""
@@ -23,26 +54,37 @@ def main():
         "Ronaldo", "Ramsey", "Dybala", "Douglas Costa", "Alex Sandro", "Danilo", "McKennie", "Cuadrado", "Bonucci", "Rugani",\
         "Rabiot", "Demiral", "Bentancur", "Pinsoglio", "Bernardeschi", "Kulusevski", "Buffon", "Pirlo")
 
-    with open("goalsfromrsoccer/logs/submissionsUsed.txt", "r") as f:
+    with open("logs/goalsfromrsoccer/submissionsUsed.txt", "r") as f:
         submissions_used = f.read()
         submissions_used = submissions_used.split("\n")
         submissions_used = list(filter(None, submissions_used))
 
-    with open("goalsfromrsoccer/logs/alternatesUsed.txt", "r") as f:
+    with open("logs/goalsfromrsoccer/alternatesUsed.txt", "r") as f:
         alternates_used = f.read()
         alternates_used = alternates_used.split("\n")
         alternates_used = list(filter(None, alternates_used))
 
-    with open("goalsfromrsoccer/logs/stickiesReplied.txt", "r") as f:
+    with open("logs/goalsfromrsoccer/stickiesReplied.txt", "r") as f:
         stickies_replied = f.read()
         stickies_replied = stickies_replied.split("\n")
         stickies_replied = list(filter(None, stickies_replied))
 
-    while datetime.now() < end_time:
+    # Get kickoff times
+    kickoff, countdown, teamA, teamB = getKickoff()
+    
+    # If match hasn't kicked off, wait until it has. Otherwise continue.
+    if kickoff > datetime.datetime.now():
+        print(f"Waiting {round((countdown).total_seconds())} seconds until match starts")
+        time.sleep(countdown.seconds)
+        # TODO: - telegram_send(f"{teamA} vs {teamB} is starting. Bot starting up!")
+    
+    # Tell the script how long to run
+    end_time = datetime.datetime.now() + datetime.timedelta(hours=3)
+
+    while datetime.datetime.now() < end_time:
         try:
             # Search through submissions on /r/juve
-            # for submission in r.subreddit('juve').stream.submissions(skip_existing=True):
-            for submission in r.subreddit('juve_goal_bot').stream.submissions(pause_after=-1):
+            for submission in r.subreddit('juve').stream.submissions(pause_after=-1):
                 if submission is None:
                     break
 
@@ -55,8 +97,7 @@ def main():
                    postMatchThread = r.submission(id=submission.id)
 
             # Gather goal submissions #
-            # for submission in r.subreddit('soccer').stream.submissions(skip_existing=True):
-            for submission in r.subreddit('juve_goal_bot+soccer').stream.submissions(pause_after=-1):
+            for submission in r.subreddit('soccer').stream.submissions(skip_existing=True):
                 if submission is None:
                     break
 
@@ -68,13 +109,19 @@ def main():
                                 # Post goals to the match thread
                                 print(f"({submission.id}) Posting \"{submission.title}\" to {matchThread.title}")
                                 newGoal=f"[{submission.title}]({submission.url}) | {str(submission.author)} | [discuss]({submission.permalink})\n\n"
-                                matchThread.reply(newGoal)
-                                goalSummary += newGoal
 
+                                # Download video
+                                ytdownload(submission.id,submission.url)
+                                # Send to Telegram
+                                telegram_send(submission.id)
+                                # Post goal to match thread
+                                matchThread.reply(newGoal)
+                                # Add to goal summary
+                                goalSummary += newGoal
                                 # Mark submission as used
                                 submissions_used.append(submission.id)
                                 # Write our updated list back to the file
-                                with open("goalsfromrsoccer/logs/submissionsUsed.txt", "w") as f:
+                                with open("logs/goalsfromrsoccer/submissionsUsed.txt", "w") as f:
                                     for i in submissions_used:
                                             f.write(i + "\n")
 
@@ -95,7 +142,7 @@ def main():
                                                     alternates_used.append(second_level_comment.id)
 
                                                     # Write our updated list back to the file
-                                                    with open("goalsfromrsoccer/logs/alternatesUsed.txt", "w") as f:
+                                                    with open("logs/goalsfromrsoccer/alternatesUsed.txt", "w") as f:
                                                         for i in alternates_used:
                                                             f.write(i + "\n")
 
@@ -115,7 +162,7 @@ def main():
                             stickies_replied.append(top_level_comment.id)
 
                             # Write our updated list back to the file
-                            with open("goalsfromrsoccer/logs/stickiesReplied.txt", "w") as f:
+                            with open("logs/goalsfromrsoccer/stickiesReplied.txt", "w") as f:
                                 for top_level_comment.id in stickies_replied:
                                     f.write(top_level_comment.id + "\n")
 
