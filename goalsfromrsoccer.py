@@ -13,7 +13,6 @@ from dateutil import tz, parser
 from bs4 import BeautifulSoup
 
 #TODO: rehost on imgur
-#TODO: move downloading and Telegram to further down the thread
 
 def login():
     r = praw.Reddit('juvegoalbot')
@@ -32,12 +31,19 @@ def getKickoff():
     print(f"Countdown to {teamA} vs {teamB} at {kickoff} is {countdown}")
     return kickoff, countdown, teamA, teamB
 
-# Notify via Telegram
-def telegram_send(subid):
+# Telegram video
+def telegram_video(subid,caption):
     chat_id = credentials.telegram_chat_id
     token = credentials.telegram_token
     bot = telegram.Bot(token=token)
-    bot.send_video(chat_id=chat_id, video=open(f'videos/{subid}.mp4', 'rb'), supports_streaming=True)
+    bot.send_video(chat_id=chat_id, caption=caption, video=open(f'videos/{subid}.mp4', 'rb'), supports_streaming=True)
+    
+# Telegram message
+def telegram_msg(message):
+    chat_id = credentials.telegram_chat_id
+    token = credentials.telegram_token
+    bot = telegram.Bot(token=token)
+    bot.send_message(chat_id=chat_id, text=message)
 
 # Download video
 def ytdownload(subid,suburl):
@@ -46,13 +52,23 @@ def ytdownload(subid,suburl):
         ydl.download([f'{suburl}'])
 
 def main():
+    # Get kickoff times
+    kickoff, countdown, teamA, teamB = getKickoff()
+    
+    # If match hasn't kicked off, wait until it has. Otherwise continue.
+    if kickoff > datetime.datetime.now():
+        print(f"Waiting {round((countdown).total_seconds())} seconds until match starts")
+        #time.sleep(countdown.seconds)
+        print(f"Telegram: sending bot init message for {teamA} vs {teamB}")
+        telegram_msg(f"{teamA} vs {teamB} is kicking off. Bot starting up!")
+
     r = login()
     goalSummary = ""
     matchThread = ""
     postMatchThread = ""
     searchTerms = ("Juventus", "Juve", "Szczesny", "De Sciglio", "Chiellini", "De Ligt", "Arthur Melo", "Khedira", "Cristiano",\
         "Ronaldo", "Ramsey", "Dybala", "Douglas Costa", "Alex Sandro", "Danilo", "McKennie", "Cuadrado", "Bonucci", "Rugani",\
-        "Rabiot", "Demiral", "Bentancur", "Pinsoglio", "Bernardeschi", "Kulusevski", "Buffon", "Pirlo")
+        "Rabiot", "Demiral", "Bentancur", "Pinsoglio", "Bernardeschi", "Kulusevski", "Buffon", "Pirlo", teamA, teamB)
 
     with open("logs/goalsfromrsoccer/submissionsUsed.txt", "r") as f:
         submissions_used = f.read()
@@ -68,15 +84,6 @@ def main():
         stickies_replied = f.read()
         stickies_replied = stickies_replied.split("\n")
         stickies_replied = list(filter(None, stickies_replied))
-
-    # Get kickoff times
-    kickoff, countdown, teamA, teamB = getKickoff()
-    
-    # If match hasn't kicked off, wait until it has. Otherwise continue.
-    if kickoff > datetime.datetime.now():
-        print(f"Waiting {round((countdown).total_seconds())} seconds until match starts")
-        time.sleep(countdown.seconds)
-        # TODO: - telegram_send(f"{teamA} vs {teamB} is starting. Bot starting up!")
     
     # Tell the script how long to run
     end_time = datetime.datetime.now() + datetime.timedelta(hours=3)
@@ -84,7 +91,8 @@ def main():
     while datetime.datetime.now() < end_time:
         try:
             # Search through submissions on /r/juve
-            for submission in r.subreddit('juve').stream.submissions(pause_after=-1):
+            for submission in r.subreddit('juve_goal_bot').stream.submissions(pause_after=-1):
+            # for submission in r.subreddit('juve').stream.submissions(pause_after=-1):
                 if submission is None:
                     break
 
@@ -97,7 +105,8 @@ def main():
                    postMatchThread = r.submission(id=submission.id)
 
             # Gather goal submissions #
-            for submission in r.subreddit('soccer').stream.submissions(skip_existing=True):
+            for submission in r.subreddit('juve_goal_bot').stream.submissions(pause_after=-1):
+            # for submission in r.subreddit('soccer').stream.submissions(skip_existing=True):
                 if submission is None:
                     break
 
@@ -110,10 +119,6 @@ def main():
                                 print(f"({submission.id}) Posting \"{submission.title}\" to {matchThread.title}")
                                 newGoal=f"[{submission.title}]({submission.url}) | {str(submission.author)} | [discuss]({submission.permalink})\n\n"
 
-                                # Download video
-                                ytdownload(submission.id,submission.url)
-                                # Send to Telegram
-                                telegram_send(submission.id)
                                 # Post goal to match thread
                                 matchThread.reply(newGoal)
                                 # Add to goal summary
@@ -124,6 +129,12 @@ def main():
                                 with open("logs/goalsfromrsoccer/submissionsUsed.txt", "w") as f:
                                     for i in submissions_used:
                                             f.write(i + "\n")
+
+                                # Download video
+                                ytdownload(submission.id,submission.url)
+                                # Send to Telegram
+                                print(f"Telegram: sending {submission.title}")
+                                telegram_video(submission.id,submission.title)
 
                             # Find alternate angles
                             for top_level_comment in submission.comments:
@@ -149,6 +160,7 @@ def main():
             if postMatchThread != "" and goalSummary != "":
                 # Reply to post-match thread
                 for top_level_comment in postMatchThread.comments:
+                    submission.comments.replace_more(limit=None)
                     # If we find a stickied comment that contains the keywords:
                     if top_level_comment.stickied and ("highlights" in top_level_comment.body or "to this comment" in top_level_comment.body):
                         # If comment hasn't been replied to
