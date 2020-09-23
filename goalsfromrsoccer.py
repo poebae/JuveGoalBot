@@ -14,6 +14,9 @@ from bs4 import BeautifulSoup
 
 #TODO: rehost on imgur
 
+graham_chat_id = credentials.graham_chat_id
+gjustjuve_chat_id = credentials.gjustjuve_chat_id
+
 def login():
     r = praw.Reddit('juvegoalbot')
     return r
@@ -32,18 +35,16 @@ def getKickoff():
     return kickoff, countdown, teamA, teamB
 
 # Telegram video
-def telegram_video(subid,caption):
-    chat_id = credentials.telegram_chat_id
+def telegram_video(chatid,subid,caption):
     token = credentials.telegram_token
     bot = telegram.Bot(token=token)
-    bot.send_video(chat_id=chat_id, caption=caption, video=open(f'videos/{subid}.mp4', 'rb'), supports_streaming=True)
+    bot.send_video(chat_id=chatid, caption=caption, video=open(f'videos/{subid}.mp4', 'rb'), supports_streaming=True)
     
 # Telegram message
 def telegram_msg(message):
-    chat_id = credentials.telegram_chat_id
     token = credentials.telegram_token
     bot = telegram.Bot(token=token)
-    bot.send_message(chat_id=chat_id, text=message)
+    bot.send_message(chat_id=graham_chat_id, text=message)
 
 # Download video
 def ytdownload(subid,suburl):
@@ -132,9 +133,12 @@ def main():
 
                                 # Download video
                                 ytdownload(submission.id,submission.url)
-                                # Send to Telegram
-                                print(f"Telegram: sending {submission.title}")
-                                telegram_video(submission.id,submission.title)
+                                # Send to Graham
+                                print(f"Telegraham: sending {submission.title}")
+                                telegram_video(graham_chat_id,submission.id,submission.title)
+                                # Send to GJustJuve group
+                                print(f"Telegram GJustjuve: sending {submission.title}")
+                                telegram_video(gjustjuve_chat_id,submission.id,submission.title)
 
                             # Find alternate angles
                             for top_level_comment in submission.comments:
