@@ -7,6 +7,7 @@ import re
 import requests
 import time
 import telegram
+import urllib3
 import urllib.request
 import youtube_dl
 from dateutil import tz, parser
@@ -16,6 +17,8 @@ from bs4 import BeautifulSoup
 
 graham_chat_id = credentials.graham_chat_id
 gjustjuve_chat_id = credentials.gjustjuve_chat_id
+token = credentials.telegram_token
+bot = telegram.Bot(token=token)
 
 def login():
     r = praw.Reddit('juvegoalbot')
@@ -36,14 +39,10 @@ def getKickoff():
 
 # Telegram video
 def telegram_video(chatid,subid,caption):
-    token = credentials.telegram_token
-    bot = telegram.Bot(token=token)
     bot.send_video(chat_id=chatid, caption=caption, video=open(f'videos/{subid}.mp4', 'rb'), supports_streaming=True)
     
 # Telegram message
 def telegram_msg(message):
-    token = credentials.telegram_token
-    bot = telegram.Bot(token=token)
     bot.send_message(chat_id=graham_chat_id, text=message)
 
 # Download video
@@ -67,30 +66,33 @@ def main():
     goalSummary = ""
     matchThread = ""
     postMatchThread = ""
+    altAngles = []
     searchTerms = ("Juventus", "Juve", "Szczesny", "De Sciglio", "Chiellini", "De Ligt", "Arthur Melo", "Khedira", "Cristiano",\
         "Ronaldo", "Ramsey", "Dybala", "Douglas Costa", "Alex Sandro", "Danilo", "McKennie", "Cuadrado", "Bonucci", "Rugani",\
         "Rabiot", "Demiral", "Bentancur", "Pinsoglio", "Bernardeschi", "Kulusevski", "Buffon", "Pirlo", teamA, teamB)
-
-    with open("logs/goalsfromrsoccer/submissionsUsed.txt", "r") as f:
-        submissions_used = f.read()
-        submissions_used = submissions_used.split("\n")
-        submissions_used = list(filter(None, submissions_used))
-
-    with open("logs/goalsfromrsoccer/alternatesUsed.txt", "r") as f:
-        alternates_used = f.read()
-        alternates_used = alternates_used.split("\n")
-        alternates_used = list(filter(None, alternates_used))
-
-    with open("logs/goalsfromrsoccer/stickiesReplied.txt", "r") as f:
-        stickies_replied = f.read()
-        stickies_replied = stickies_replied.split("\n")
-        stickies_replied = list(filter(None, stickies_replied))
-    
+ 
     # Tell the script how long to run
     end_time = datetime.datetime.now() + datetime.timedelta(hours=3)
 
     while datetime.datetime.now() < end_time:
         try:
+
+            with open("logs/goalsfromrsoccer/submissionsUsed.txt", "r") as f:
+                submissions_used = f.read()
+                submissions_used = submissions_used.split("\n")
+                submissions_used = list(filter(None, submissions_used))
+
+            with open("logs/goalsfromrsoccer/alternatesUsed.txt", "r") as f:
+                alternates_used = f.read()
+                alternates_used = alternates_used.split("\n")
+                alternates_used = list(filter(None, alternates_used))
+
+            with open("logs/goalsfromrsoccer/stickiesReplied.txt", "r") as f:
+                stickies_replied = f.read()
+                stickies_replied = stickies_replied.split("\n")
+                stickies_replied = list(filter(None, stickies_replied))
+
+
             # Search through submissions on /r/juve
             for submission in r.subreddit('juve_goal_bot').stream.submissions(pause_after=-1):
             # for submission in r.subreddit('juve').stream.submissions(pause_after=-1):
@@ -134,11 +136,11 @@ def main():
                                 # Download video
                                 ytdownload(submission.id,submission.url)
                                 # Send to Graham
-                                print(f"Telegraham: sending {submission.title}")
+                                print(f"({submission.id}) Graham: sending {submission.title}")
                                 telegram_video(graham_chat_id,submission.id,submission.title)
                                 # Send to GJustJuve group
-                                print(f"Telegram GJustjuve: sending {submission.title}")
-                                telegram_video(gjustjuve_chat_id,submission.id,submission.title)
+                                # print(f"({submission.id}) GJustjuve: sending {submission.title}")
+                                # telegram_video(gjustjuve_chat_id,submission.id,submission.title)
 
                             # Find alternate angles
                             for top_level_comment in submission.comments:
@@ -146,20 +148,44 @@ def main():
                                 if top_level_comment.stickied:
                                     for second_level_comment in top_level_comment.replies:
                                         if "http" in second_level_comment.body and second_level_comment.id not in alternates_used:
-                                            
+
+                                            # Mark AA as used
+                                            alternates_used.append(second_level_comment.id)                                                      
+
+                                            # Write our updated list back to the file
+                                            with open("logs/goalsfromrsoccer/alternatesUsed.txt", "w") as f:
+                                                for i in alternates_used:
+                                                    f.write(i + "\n")
+
                                             # Post AA to match thread
                                             for top_level_comment in matchThread.comments:
                                                 if submission.id in top_level_comment.body:
                                                     print(f"({second_level_comment.id} -> {submission.id}) Adding AA to {submission.title}")
                                                     top_level_comment.reply(f"{second_level_comment.body} | {str(second_level_comment.author)} | [discuss]({second_level_comment.permalink})")
 
-                                                    # Mark AA as used
-                                                    alternates_used.append(second_level_comment.id)
+                                            # Find AAs that aren't just mirrors and send to Telegram
+                                            if any(i in second_level_comment.body for i in ["AA","lternate","ngle","ommenta"]):
+                                                altAngles = re.findall('(?<=)http.+?(?=[)\'\" ])', second_level_comment.body)
+                                                for i in altAngles:
+                                                    print(f"({second_level_comment.id}) Sending {i} from {second_level_comment.body}")
+                                                    try:
+                                                        # Download video
+                                                        ytdownload(second_level_comment.id,i)
+                                                        pass
+                                                    #TODO: this is bogus. Need to catch the right error
+                                                    except urllib3.exceptions.HTTPError as http_error:
+                                                        print(http_error)
+                                                        continue
 
-                                                    # Write our updated list back to the file
-                                                    with open("logs/goalsfromrsoccer/alternatesUsed.txt", "w") as f:
-                                                        for i in alternates_used:
-                                                            f.write(i + "\n")
+                                                    try:
+                                                        # Send to Graham
+                                                        print(f"({second_level_comment.id}) Graham: sending {i}")
+                                                        telegram_video(graham_chat_id,second_level_comment.id,i)
+                                                        pass
+                                                    #TODO: this is bogus. Need to catch the right error
+                                                    except urllib3.exceptions.TimeoutError as timeout_error:
+                                                        print(timeout_error)
+                                                        continue
 
             if postMatchThread != "" and goalSummary != "":
                 # Reply to post-match thread
