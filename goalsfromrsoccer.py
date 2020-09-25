@@ -52,15 +52,15 @@ def ytdownload(subid,suburl):
         ydl.download([f'{suburl}'])
 
 def main():
-    # Get kickoff times
-    kickoff, countdown, teamA, teamB = getKickoff()
+    # # Get kickoff times
+    # kickoff, countdown, teamA, teamB = getKickoff()
     
-    # If match hasn't kicked off, wait until it has. Otherwise continue.
-    if kickoff > datetime.datetime.now():
-        print(f"Waiting {round((countdown).total_seconds())} seconds until match starts")
-        #time.sleep(countdown.seconds)
-        print(f"Telegram: sending bot init message for {teamA} vs {teamB}")
-        telegram_msg(f"{teamA} vs {teamB} is kicking off. Bot starting up!")
+    # # If match hasn't kicked off, wait until it has. Otherwise continue.
+    # if kickoff > datetime.datetime.now():
+    #     print(f"Waiting {round((countdown).total_seconds())} seconds until match starts")
+    #     #time.sleep(countdown.seconds)
+    #     print(f"Telegram: sending bot init message for {teamA} vs {teamB}")
+    #     telegram_msg(f"{teamA} vs {teamB} is kicking off. Bot starting up!")
 
     r = login()
     goalSummary = ""
@@ -108,7 +108,7 @@ def main():
                    postMatchThread = r.submission(id=submission.id)
 
             # Gather goal submissions #
-            for submission in r.subreddit('juve_goal_bot').stream.submissions(pause_after=-1):
+            for submission in r.subreddit('soccer').stream.submissions(pause_after=-1):
             # for submission in r.subreddit('soccer').stream.submissions(skip_existing=True):
                 if submission is None:
                     break
@@ -136,10 +136,10 @@ def main():
                                 # Download video
                                 ytdownload(submission.id,submission.url)
                                 # Send to Graham
-                                print(f"({submission.id}) Graham: sending {submission.title}")
+                                print(f"\n({submission.id}) Graham: sending {submission.title}")
                                 telegram_video(graham_chat_id,submission.id,submission.title)
                                 # Send to GJustJuve group
-                                # print(f"({submission.id}) GJustjuve: sending {submission.title}")
+                                # print(f"\n({submission.id}) GJustjuve: sending {submission.title}")
                                 # telegram_video(gjustjuve_chat_id,submission.id,submission.title)
 
                             # Find alternate angles
@@ -150,7 +150,7 @@ def main():
                                         if "http" in second_level_comment.body and second_level_comment.id not in alternates_used:
 
                                             # Mark AA as used
-                                            alternates_used.append(second_level_comment.id)                                                      
+                                            alternates_used.append(second_level_comment.id)
 
                                             # Write our updated list back to the file
                                             with open("logs/goalsfromrsoccer/alternatesUsed.txt", "w") as f:
@@ -160,14 +160,14 @@ def main():
                                             # Post AA to match thread
                                             for top_level_comment in matchThread.comments:
                                                 if submission.id in top_level_comment.body:
-                                                    print(f"({second_level_comment.id} -> {submission.id}) Adding AA to {submission.title}")
+                                                    print(f"({second_level_comment.id} -> {submission.id}) Adding AA to {submission.title}({top_level_comment.id}")
                                                     top_level_comment.reply(f"{second_level_comment.body} | {str(second_level_comment.author)} | [discuss]({second_level_comment.permalink})")
 
                                             # Find AAs that aren't just mirrors and send to Telegram
                                             if any(i in second_level_comment.body for i in ["AA","lternate","ngle","ommenta"]):
                                                 altAngles = re.findall('(?<=)http.+?(?=[)\'\" ])', second_level_comment.body)
                                                 for i in altAngles:
-                                                    print(f"({second_level_comment.id}) Sending {i} from {second_level_comment.body}")
+                                                    print(f"\n({second_level_comment.id}) Downloading AA: {i} for {submission.title}")
                                                     try:
                                                         # Download video
                                                         ytdownload(second_level_comment.id,i)
@@ -179,8 +179,8 @@ def main():
 
                                                     try:
                                                         # Send to Graham
-                                                        print(f"({second_level_comment.id}) Graham: sending {i}")
-                                                        telegram_video(graham_chat_id,second_level_comment.id,i)
+                                                        print(f"\n({second_level_comment.id}) Graham: sending AA: {i}")
+                                                        telegram_video(graham_chat_id,second_level_comment.id,f"Replay of {submission.title}")
                                                         pass
                                                     #TODO: this is bogus. Need to catch the right error
                                                     except urllib3.exceptions.TimeoutError as timeout_error:
