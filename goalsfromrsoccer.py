@@ -122,7 +122,6 @@ def getGoals():
                     print(f"Submission queue: {submission_queue}")
 
 def postGoals():
-    matchThread = r.submission(id="jjuzys")
     goalSummary = ""
     with open("logs/goalsfromrsoccer/submissionsUsed.txt", "r") as f:
         submissions_used = f.read()
@@ -166,7 +165,6 @@ def postGoals():
             telegram_video(graham_chat_id,submission.id,submission.title)
 
 def alternateAngles():
-    matchThread = r.submission(id="jjuzys")
     with open("logs/goalsfromrsoccer/alternatesUsed.txt", "r") as f:
         alternates_used = f.read()
         alternates_used = alternates_used.split("\n")
@@ -261,7 +259,7 @@ def postMatchSummary():
                             f.write(top_level_comment.id + "\n")
 
 def main():
-    matchThread = r.submission(id="jjuzys")
+    matchThread = ""
     postMatchThread = ""
     global submission_queue
     submission_queue = []
